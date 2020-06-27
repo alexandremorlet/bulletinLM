@@ -80,8 +80,8 @@ def calc_moyenne(dico):
     return dico
 
 ### Enregistrement des évaluations pour chaque élève
-for matiere in resultats:
-    for eleve_id in resultats[matiere]:
+for classe in resultats:
+    for eleve_id in resultats[classe]:
         query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
                 "FROM sacoche_saisie AS s, sacoche_user AS u, sacoche_referentiel_item AS ri, "
                 "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
@@ -106,21 +106,6 @@ for matiere in resultats:
                 resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
 
         # On inclut les notes et la moyenne dans le dictionnaire global
-        # Puisqu'on a regroupé les élèves par classe, il faut retrouver la classe
-        # de l'élève considéré
-        ### Méthode 1: En SQL (21;3 s)
-        query = ("SELECT g.groupe_nom "
-                "FROM sacoche_user AS u, sacoche_groupe AS g "
-                "WHERE g.groupe_id = u.eleve_classe_id AND user_id = %d"%eleve_id)
-        cursor.execute(query)
-        classe = next(cursor)[0] # l'iterable cursor ne contient qu'une valeur
-
-        ### Méthode 2: à partir des données déjà dans Python
-        # Donne 21,9 s, on garde la méthode 1.
-        # for c in resultats:
-        #     if eleve_id in resultats[c]:
-        #         classe = c
-        #         break
         resultats[classe][eleve_id]['bulletin'] = calc_moyenne(resultat_eleve)
 
 
