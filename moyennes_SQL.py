@@ -3,6 +3,7 @@ Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
 Tables utilisées: [A COMPLETER]
 TODO: Gestion des coeffs, appréciations, absences
+      Gestion des périodes (trimestres)
       Faire apparaître explicitement tous les thèmes, même en l'abs d'éval
         (géré dans la partie graphique selon le référentiel
         choisi par notre équipe ?)
@@ -53,6 +54,41 @@ for id, INE, nom, prenom, classe in cursor:
 #     json.dump(resultats, json_file, sort_keys=True)
 # exit()
 
+############################
+#   Equipes pédagogiques   #
+############################
+# Il faut, pour chaque resultats[classe], indiquer le/la PP ainsi
+# que l'enseignant.e de chaque matière
+# TODO: On fait la liste des profs, mais il faudrait les associer automatiquement
+# à leur matière
+query = ("SELECT u.user_nom, u.user_genre, g.groupe_nom, jug.jointure_pp "
+         "FROM sacoche_jointure_user_groupe as jug, sacoche_user as u, "
+         "sacoche_groupe as g "
+         "WHERE u.user_profil_sigle = 'ENS' AND jug.user_id = u.user_id "
+         "AND g.groupe_id = jug.groupe_id AND g.groupe_type = 'classe'")
+cursor.execute(query)
+for nom, genre, classe, pp in cursor:
+    # Gestion du genre de l'enseignant
+    if genre == 'F':
+        nom = 'Mme. '+nom
+    elif genre == 'M':
+        nom = 'M. '+nom
+    else:
+        pass # Non renseigné/inconnu
+
+    # On ajoute l'enseignant à la classe
+    try:
+        resultats[classe]['profs'].append(nom)
+    except AttributeError as err:
+        resultats[classe]['profs'] = []
+        resultats[classe]['profs'].append(nom)
+
+    if pp == 1:
+        resultats[classe]['PP'] = nom
+
+# with open('temp.json', 'w') as json_file:
+#     json.dump(resultats, json_file)
+# exit()
 
 ###########################
 #   Notes et  moyennes   #
@@ -82,6 +118,8 @@ def calc_moyenne(dico):
 ### Enregistrement des évaluations pour chaque élève
 for classe in resultats:
     for eleve_id in resultats[classe]:
+        if isinstance(eleve_id, str):
+            continue
         query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
                 "FROM sacoche_saisie AS s, sacoche_user AS u, sacoche_referentiel_item AS ri, "
                 "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
@@ -111,4 +149,4 @@ for classe in resultats:
 
 
 with open('temp.json', 'w') as json_file:
-    json.dump(resultats, json_file, sort_keys=True)
+    json.dump(resultats, json_file)
