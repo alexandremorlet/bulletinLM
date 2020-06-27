@@ -2,7 +2,7 @@
 Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
 Tables utilisées: [A COMPLETER]
-TODO: Gestion des coeffs, appréciations, absences, intégrer la classe
+TODO: Gestion des coeffs, appréciations, absences
       Faire apparaître explicitement tous les thèmes, même en l'abs d'éval
         (géré dans la partie graphique selon le référentiel
         choisi par notre équipe ?)
@@ -35,17 +35,19 @@ nested_dict = lambda: defaultdict(nested_dict)
 #  Infos. persos. élèves  #
 ###########################
 # Le grand dictionnaire resultats contiendra le bilan de chaque élève
-# On va commencer par le remplir avec l'ID, le nom, le prénom et l'INE de l'élève
+# Les élèves sont regroupés par classes
+# On utilise l'ID des élèves mais pas des classes (homonymes possibles que dans un cas)
+# On commence donc par remplir les infos personnelles des élèves, regroupés par classes
 resultats = nested_dict()
 
-query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom "
-        "FROM sacoche_user AS u "
-        "WHERE u.user_profil_sigle = 'ELV'")
+query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom "
+        "FROM sacoche_user AS u, sacoche_groupe AS g "
+        "WHERE u.user_profil_sigle = 'ELV' AND g.groupe_id = u.eleve_classe_id")
 cursor.execute(query)
-for id, INE, nom, prenom in cursor:
-    resultats[id]['INE'] = INE
-    resultats[id]['nom'] = nom
-    resultats[id]['prenom'] = prenom
+for id, INE, nom, prenom, classe in cursor:
+    resultats[classe][id]['INE'] = INE
+    resultats[classe][id]['nom'] = nom
+    resultats[classe][id]['prenom'] = prenom
 
 # with open('temp.json', 'w') as json_file:
 #     json.dump(resultats, json_file, sort_keys=True)
@@ -78,29 +80,48 @@ def calc_moyenne(dico):
     return dico
 
 ### Enregistrement des évaluations pour chaque élève
-for eleve_id in resultats:
-    query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
-            "FROM sacoche_saisie AS s, sacoche_user AS u, sacoche_referentiel_item AS ri, "
-            "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
-            "WHERE s.eleve_id=%d AND ri.item_id = s.item_id "
-            "AND rt.theme_id = ri.theme_id AND rd.domaine_id = rt.domaine_id "
-            #"AND s.saisie_note REGEXP '^[0-9]+$' " # on enlève les AB, NE, NN, ...
-            "LIMIT 30"%eleve_id)
-    cursor.execute(query)
+for matiere in resultats:
+    for eleve_id in resultats[matiere]:
+        query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
+                "FROM sacoche_saisie AS s, sacoche_user AS u, sacoche_referentiel_item AS ri, "
+                "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
+                "WHERE s.eleve_id=%d AND ri.item_id = s.item_id "
+                "AND rt.theme_id = ri.theme_id AND rd.domaine_id = rt.domaine_id "%eleve_id)
+                #"AND s.saisie_note REGEXP '^[0-9]+$' " # on enlève les AB, NE, NN, ...
+                #"LIMIT 30"%eleve_id)
 
-    # On met les données de l'élève considéré dans resultat_eleve
-    # dictionnaire temporaire
-    resultat_eleve = nested_dict()
-    ### resultat_eleve[nom_matiere][nom_thème] = [note1, note2, ...]
-    for theme_nom, domaine_nom, note in cursor:
-        try:
-            resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
-        except AttributeError as err:
-            resultat_eleve[domaine_nom][theme_nom]['notes'] = []
-            resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
+        # RQ: Avec tables s_ref_domaine et s_matiere, on peut avoir un accès propre
+        #     au nom des matières
+        cursor.execute(query)
 
-    # On inclut les notes et la moyenne dans le dictionnaire global
-    resultats[eleve_id]['bulletin'] = calc_moyenne(resultat_eleve)
+        # On met les données de l'élève considéré dans resultat_eleve
+        # dictionnaire temporaire
+        resultat_eleve = nested_dict()
+        ### resultat_eleve[nom_matiere][nom_thème] = [note1, note2, ...]
+        for theme_nom, domaine_nom, note in cursor:
+            try:
+                resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
+            except AttributeError as err:
+                resultat_eleve[domaine_nom][theme_nom]['notes'] = []
+                resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
+
+        # On inclut les notes et la moyenne dans le dictionnaire global
+        # Puisqu'on a regroupé les élèves par classe, il faut retrouver la classe
+        # de l'élève considéré
+        ### Méthode 1: En SQL (21;3 s)
+        query = ("SELECT g.groupe_nom "
+                "FROM sacoche_user AS u, sacoche_groupe AS g "
+                "WHERE g.groupe_id = u.eleve_classe_id AND user_id = %d"%eleve_id)
+        cursor.execute(query)
+        classe = next(cursor)[0] # l'iterable cursor ne contient qu'une valeur
+
+        ### Méthode 2: à partir des données déjà dans Python
+        # Donne 21,9 s, on garde la méthode 1.
+        # for c in resultats:
+        #     if eleve_id in resultats[c]:
+        #         classe = c
+        #         break
+        resultats[classe][eleve_id]['bulletin'] = calc_moyenne(resultat_eleve)
 
 
 
