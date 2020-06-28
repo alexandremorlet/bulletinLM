@@ -9,6 +9,7 @@ TODO: Gestion des coeffs, appréciations, absences
         choisi par notre équipe ?)
       Gestion des cas particuliers (que des absences, que des NE, NN, ...)
         Faire apparaître ABS, NE, NN ou une croix si on a un mélange de cas
+      Associer à chaque prof sa matière (sacoche_jointure_user_matiere)
 """
 import json
 import os
@@ -61,13 +62,13 @@ for id, INE, nom, prenom, classe in cursor:
 # que l'enseignant.e de chaque matière
 # TODO: On fait la liste des profs, mais il faudrait les associer automatiquement
 # à leur matière
-query = ("SELECT u.user_nom, u.user_genre, g.groupe_nom, jug.jointure_pp "
+query = ("SELECT u.user_nom, u.user_genre, g.groupe_nom, jug.jointure_pp, u.user_id "
          "FROM sacoche_jointure_user_groupe as jug, sacoche_user as u, "
          "sacoche_groupe as g "
          "WHERE u.user_profil_sigle = 'ENS' AND jug.user_id = u.user_id "
          "AND g.groupe_id = jug.groupe_id AND g.groupe_type = 'classe'")
 cursor.execute(query)
-for nom, genre, classe, pp in cursor:
+for nom, genre, classe, pp, id in cursor:
     # Gestion du genre de l'enseignant
     if genre == 'F':
         nom = 'Mme. '+nom
@@ -77,14 +78,10 @@ for nom, genre, classe, pp in cursor:
         pass # Non renseigné/inconnu
 
     # On ajoute l'enseignant à la classe
-    try:
-        resultats[classe]['profs'].append(nom)
-    except AttributeError as err:
-        resultats[classe]['profs'] = []
-        resultats[classe]['profs'].append(nom)
-
-    if pp == 1:
-        resultats[classe]['PP'] = nom
+    # Format: [M/Mme X, matière, PP (0/1)]
+    # On garde un espace vide pour la matière (TODO)
+    # Solution temp: matière remplie à partir des appréciations
+    resultats[classe]['profs'][id]={'nom': nom, 'matiere': [], 'pp': bool(pp)}
 
 # with open('temp.json', 'w') as json_file:
 #     json.dump(resultats, json_file)
@@ -118,7 +115,8 @@ def calc_moyenne(dico):
 ### Enregistrement des évaluations pour chaque élève
 for classe in resultats:
     for eleve_id in resultats[classe]:
-        if isinstance(eleve_id, str):
+        if isinstance(eleve_id, str): # dans resultats[classe], type(key) est int pour eleve_id,
+                                      # et str pour tout le reste (prof, PP, appréciations, ...)
             continue
         query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
                 "FROM sacoche_saisie AS s, sacoche_referentiel_item AS ri, "
@@ -147,6 +145,44 @@ for classe in resultats:
         resultats[classe][eleve_id]['bulletin'] = calc_moyenne(resultat_eleve)
 
 
+#############################
+#  Appréciations (classes)  #
+#############################
+# On collecte toutes les appréciations, triées par periode_id, on complétera ensuite
+# Attention: la table officiel_saisie contient des ID de groupe et de classe dans
+# la même colonne, il faut être vigilant
+
+# rubrique_id est associable à matiere_id
+# prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
+for classe in resultats:
+    query = ("SELECT os.periode_id, g.groupe_nom, os.saisie_appreciation, "
+             "m.matiere_nom, os.prof_id "
+             "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
+             "sacoche_matiere as m "
+             "WHERE g.groupe_nom = '%s' AND os.saisie_type = 'classe' AND g.groupe_id = os.eleve_ou_classe_id "
+             "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
+    cursor.execute(query)
+    for periode, classe, appr, matiere, prof_id in cursor:
+        print(periode, classe, appr, matiere, prof_id)
+        print(resultats[classe]['profs'][prof_id]['nom'], matiere)
+        resultats[classe]['appreciations'][periode][matiere] = appr
+        # On en profite pour remplir la matière de chaque prof sauf cas particuliers
+        # d'abord c'est peut-être déjà écrit (très probable)
+        if matiere in resultats[classe]['profs'][prof_id]['matiere']:
+            continue
+        # ensuite deux cas: soit ce prof n'a qu'1 matière (cas simple)
+        # soit il en a plusieurs (PC+SL, HG+EMC), donc il faut initier une liste
+        else:
+            resultats[classe]['profs'][prof_id]['matiere'].append(matiere)
+
+
+# for classe in resultats:
+#     for eleve_id in resultats[classe]:
+#         if isinstance(eleve_id, str): # dans resultats[classe], type(key) est int pour eleve_id,
+#                                       # et str pour tout le reste (prof, PP, appréciations, ...)
+#             continue
+#
+#         query = ("SELECT os.periode_id, eleve_ou_classe_id")
 
 with open('temp.json', 'w') as json_file:
     json.dump(resultats, json_file)
