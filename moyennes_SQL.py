@@ -155,11 +155,11 @@ for classe in resultats:
 # rubrique_id est associable à matiere_id
 # prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
 for classe in resultats:
-    query = ("SELECT os.periode_id, g.groupe_nom, os.saisie_appreciation, "
+    query = ("SELECT p.periode_nom, g.groupe_nom, os.saisie_appreciation, "
              "m.matiere_nom, os.prof_id "
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
-             "sacoche_matiere as m "
-             "WHERE g.groupe_nom = '%s' AND os.saisie_type = 'classe' AND g.groupe_id = os.eleve_ou_classe_id "
+             "sacoche_matiere as m, sacoche_periode as p "
+             "WHERE p.periode_id = os.periode_id AND g.groupe_nom = '%s' AND os.saisie_type = 'classe' AND g.groupe_id = os.eleve_ou_classe_id "
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
     cursor.execute(query)
     for periode, classe, appr, matiere, prof_id in cursor:
