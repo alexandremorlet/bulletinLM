@@ -2,17 +2,18 @@
 Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
 Tables utilisées: [A COMPLETER]
-TODO: Gestion des coeffs, appréciations, absences
+TODO: Gestion des coeffs, appréciations (manque "décision"), absences
       Gestion des périodes (trimestres)
       Faire apparaître explicitement tous les thèmes, même en l'abs d'éval
         (géré dans la partie graphique selon le référentiel
         choisi par notre équipe ?)
       Gestion des cas particuliers (que des absences, que des NE, NN, ...)
         Faire apparaître ABS, NE, NN ou une croix si on a un mélange de cas
-      Associer à chaque prof sa matière (sacoche_jointure_user_matiere)
+      (Done ?) Associer à chaque prof sa matière (sacoche_jointure_user_matiere)
 """
 import json
 import os
+import datetime
 ###########################
 #    Connexion à MySQL    #
 ###########################
@@ -91,10 +92,49 @@ for nom, genre, classe, pp, id in cursor:
 #   Notes et  moyennes   #
 ###########################
 
+def periode_note(classe, date):
+    """
+    On a besoin d'associer une période à chaque note. Pour une classe donnée,
+    les dates de périodes sont définies dans jointure_groupe_periode, les noms
+    de périodes dans periode et les liens id/nom groupe sont dans groupe
+    """
+    periode = False
+    ## On récupère, pour la classe, les dates et ID des périodes
+    query = ("SELECT p.periode_nom, jgp.jointure_date_debut, jgp.jointure_date_fin "
+             "FROM sacoche_jointure_groupe_periode as jgp, "
+             "sacoche_groupe as g, sacoche_periode as p "
+             "WHERE p.periode_id = jgp.periode_id "
+             "AND jgp.groupe_id = g.groupe_id AND g.groupe_nom = '%s'"%classe)
+    cursor.execute(query)
+
+    periodes = nested_dict()
+    for p, debut, fin in cursor:
+        print(p, debut, fin)
+        # conversion des dates de str à datetime.date
+        # periodes[periode]['debut'] = datetime.datetime.strptime(debut, '%Y-%m-%d')
+        # periodes[periode]['fin'] = datetime.datetime.strptime(fin, '%Y-%m-%d')
+        periodes[p]['debut'] = debut
+        periodes[p]['fin'] = fin
+
+    for p in periodes:
+        if periodes[p]['debut'] <= date <= periodes[p]['fin']:
+            periode = p
+            break
+
+    return periode # on renvoit le nom de la période, pas l'id !
+
+w = periode_note('2GT 2', datetime.date(2020, 2, 1))
+print(w)
+exit()
+
 ### Fonction calc_moyenne
 # on attend de recevoir le dictionnaire resultat_eleve[matière][theme]
 # qui est complété dans la grande boucle qui parse toutes les notes saisies
 def calc_moyenne(dico):
+    # Les périodes sont définies, pour un groupe donné, dans jointure_groupe_periode
+    # On va donc calculer la moyenne par période, par matière, par thème
+    # On retourne un dico sans les notes car l'objet datetime.date ne passe
+    # pas bien dans JSON visiblement.
     for matiere in dico:
         for theme in dico[matiere]:
             moyenne = 0
@@ -118,13 +158,16 @@ for classe in resultats:
         if isinstance(eleve_id, str): # dans resultats[classe], type(key) est int pour eleve_id,
                                       # et str pour tout le reste (prof, PP, appréciations, ...)
             continue
-        query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
+        query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note, "
+                "s.saisie_date " # on prend aussi la date pour les moyennes trimestrielles
                 "FROM sacoche_saisie AS s, sacoche_referentiel_item AS ri, "
                 "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
                 "WHERE s.eleve_id=%d AND ri.item_id = s.item_id "
                 "AND rt.theme_id = ri.theme_id AND rd.domaine_id = rt.domaine_id "%eleve_id)
                 #"AND s.saisie_note REGEXP '^[0-9]+$' " # on enlève les AB, NE, NN, ...
                 #"LIMIT 30"%eleve_id)
+
+                # date: datetime.date(2020, 6, 27)
 
         # RQ: Avec tables s_ref_domaine et s_matiere, on peut avoir un accès propre
         #     au nom des matières
@@ -133,13 +176,13 @@ for classe in resultats:
         # On met les données de l'élève considéré dans resultat_eleve
         # dictionnaire temporaire
         resultat_eleve = nested_dict()
-        ### resultat_eleve[nom_matiere][nom_thème] = [note1, note2, ...]
-        for theme_nom, domaine_nom, note in cursor:
+        ### resultat_eleve[nom_matiere][nom_thème] = [(note1, date1), (note2,date2), ...]
+        for theme_nom, domaine_nom, note, date in cursor:
             try:
-                resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
+                resultat_eleve[domaine_nom][theme_nom]['notes'].append((note,date))
             except AttributeError as err:
                 resultat_eleve[domaine_nom][theme_nom]['notes'] = []
-                resultat_eleve[domaine_nom][theme_nom]['notes'].append(note)
+                resultat_eleve[domaine_nom][theme_nom]['notes'].append((note,date))
 
         # On inclut les notes et la moyenne dans le dictionnaire global
         resultats[classe][eleve_id]['bulletin'] = calc_moyenne(resultat_eleve)
