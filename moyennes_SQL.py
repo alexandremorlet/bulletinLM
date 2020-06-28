@@ -191,7 +191,7 @@ for classe in resultats:
 # prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
 for classe in resultats:
     query = ("SELECT p.periode_nom, os.saisie_appreciation, os.eleve_ou_classe_id, "
-             "m.matiere_nom, g.groupe_nom "
+             "m.matiere_nom "
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
              "sacoche_matiere as m, sacoche_periode as p, sacoche_user as u "
              "WHERE p.periode_id = os.periode_id " # pour p.periode_nom
@@ -201,19 +201,11 @@ for classe in resultats:
              "AND g.groupe_nom = '%s' "
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe) # nom matière
     cursor.execute(query)
-    for periode, appr, eleve, matiere, classe2 in cursor:
-        print(periode, classe, classe2, eleve, appr, matiere)
-        continue
-        print(resultats[classe]['profs'][prof_id]['nom'], matiere)
-        resultats[classe]['appreciations'][periode][matiere] = appr
-        # On en profite pour remplir la matière de chaque prof sauf cas particuliers
-        # d'abord c'est peut-être déjà écrit (très probable)
-        if matiere in resultats[classe]['profs'][prof_id]['matiere']:
-            continue
-        # ensuite deux cas: soit ce prof n'a qu'1 matière (cas simple)
-        # soit il en a plusieurs (PC+SL, HG+EMC), donc il faut initier une liste
-        else:
-            resultats[classe]['profs'][prof_id]['matiere'].append(matiere)
+    for periode, appr, eleve, matiere in cursor:
+        print(periode, classe, eleve, appr, matiere)
+
+        resultats[classe][eleve]['bulletin'][periode][matiere]['appreciation'] = appr
+
 
 with open('temp.json', 'w') as json_file:
     json.dump(resultats, json_file)
