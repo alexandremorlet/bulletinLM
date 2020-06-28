@@ -155,14 +155,15 @@ for classe in resultats:
 # rubrique_id est associable à matiere_id
 # prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
 for classe in resultats:
-    query = ("SELECT p.periode_nom, g.groupe_nom, os.saisie_appreciation, "
+    query = ("SELECT p.periode_nom, os.saisie_appreciation, "
              "m.matiere_nom, os.prof_id "
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
              "sacoche_matiere as m, sacoche_periode as p "
-             "WHERE p.periode_id = os.periode_id AND g.groupe_nom = '%s' AND os.saisie_type = 'classe' AND g.groupe_id = os.eleve_ou_classe_id "
+             "WHERE p.periode_id = os.periode_id AND os.saisie_type = 'classe' AND os.eleve_ou_classe_id = g.groupe_id "
+             "AND g.groupe_nom = '%s' "
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
     cursor.execute(query)
-    for periode, classe, appr, matiere, prof_id in cursor:
+    for periode, appr, matiere, prof_id in cursor:
         print(periode, classe, appr, matiere, prof_id)
         print(resultats[classe]['profs'][prof_id]['nom'], matiere)
         resultats[classe]['appreciations'][periode][matiere] = appr
@@ -176,13 +177,35 @@ for classe in resultats:
             resultats[classe]['profs'][prof_id]['matiere'].append(matiere)
 
 
+##############################
+#   Appréciations (élèves)   #
+##############################
+# On collecte toutes les appréciations, triées par periode_id, on complétera ensuite
+# Attention: la table officiel_saisie contient des ID de groupe et de classe dans
+# la même colonne, il faut être vigilant
+
+# rubrique_id est associable à matiere_id
+# prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
 # for classe in resultats:
-#     for eleve_id in resultats[classe]:
-#         if isinstance(eleve_id, str): # dans resultats[classe], type(key) est int pour eleve_id,
-#                                       # et str pour tout le reste (prof, PP, appréciations, ...)
+#     query = ("SELECT p.periode_nom, g.groupe_nom, os.saisie_appreciation, "
+#              "m.matiere_nom, os.prof_id "
+#              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
+#              "sacoche_matiere as m, sacoche_periode as p "
+#              "WHERE p.periode_id = os.periode_id AND g.groupe_nom = '%s' AND os.saisie_type = 'eleve' AND g.groupe_id = os.eleve_ou_classe_id "
+#              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
+#     cursor.execute(query)
+#     for periode, classe, appr, matiere, prof_id in cursor:
+#         print(periode, classe, appr, matiere, prof_id)
+#         print(resultats[classe]['profs'][prof_id]['nom'], matiere)
+#         resultats[classe]['appreciations'][periode][matiere] = appr
+#         # On en profite pour remplir la matière de chaque prof sauf cas particuliers
+#         # d'abord c'est peut-être déjà écrit (très probable)
+#         if matiere in resultats[classe]['profs'][prof_id]['matiere']:
 #             continue
-#
-#         query = ("SELECT os.periode_id, eleve_ou_classe_id")
+#         # ensuite deux cas: soit ce prof n'a qu'1 matière (cas simple)
+#         # soit il en a plusieurs (PC+SL, HG+EMC), donc il faut initier une liste
+#         else:
+#             resultats[classe]['profs'][prof_id]['matiere'].append(matiere)
 
 with open('temp.json', 'w') as json_file:
     json.dump(resultats, json_file)
