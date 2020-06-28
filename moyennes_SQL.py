@@ -121,7 +121,7 @@ for classe in resultats:
         if isinstance(eleve_id, str):
             continue
         query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note "
-                "FROM sacoche_saisie AS s, sacoche_user AS u, sacoche_referentiel_item AS ri, "
+                "FROM sacoche_saisie AS s, sacoche_referentiel_item AS ri, "
                 "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
                 "WHERE s.eleve_id=%d AND ri.item_id = s.item_id "
                 "AND rt.theme_id = ri.theme_id AND rd.domaine_id = rt.domaine_id "%eleve_id)
