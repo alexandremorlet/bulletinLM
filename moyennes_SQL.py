@@ -8,7 +8,6 @@ TODO: Absences
         choisi par notre équipe ?)
       Gestion des cas particuliers (que des absences, que des NE, NN, ...)
         Faire apparaître ABS, NE, NN ou une croix si on a un mélange de cas
-      (Done ?) Associer à chaque prof sa matière (sacoche_jointure_user_matiere)
 """
 import json
 import os
@@ -51,17 +50,20 @@ for id, INE, nom, prenom, classe in cursor:
     resultats[classe][id]['nom'] = nom
     resultats[classe][id]['prenom'] = prenom
 
-# with open('temp.json', 'w') as json_file:
-#     json.dump(resultats, json_file, sort_keys=True)
-# exit()
 
 ############################
 #   Equipes pédagogiques   #
 ############################
 # Il faut, pour chaque resultats[classe], indiquer le/la PP ainsi
 # que l'enseignant.e de chaque matière
+
 # TODO: On fait la liste des profs, mais il faudrait les associer automatiquement
-# à leur matière
+# à leur matière MAIS jointure_user_matiere permet de faire le lien entre prof
+# et matiere, mais pas de savoir pour quelle classe (X est-il prof de PC, de SL,
+# ou d'ES avec la classe Y ?). jointure_user_groupe permet de faire le lien entre
+# prof et classe, mais ne précise pas la matière. On ne peut pas croiser les deux.
+# Solution temp: matière remplie à partir des appréciations
+
 query = ("SELECT u.user_nom, u.user_genre, g.groupe_nom, jug.jointure_pp, u.user_id "
          "FROM sacoche_jointure_user_groupe as jug, sacoche_user as u, "
          "sacoche_groupe as g "
@@ -79,7 +81,7 @@ for nom, genre, classe, pp, id in cursor:
 
     # On ajoute l'enseignant à la classe
     # Format: [M/Mme X, matière, PP (0/1)]
-    # On garde un espace vide pour la matière (TODO)
+    # On garde un espace vide pour la matière
     # Solution temp: matière remplie à partir des appréciations
     resultats[classe]['profs'][id]={'nom': nom, 'matiere': [], 'pp': bool(pp)}
 
@@ -209,7 +211,8 @@ for classe in resultats:
 # la même colonne, il faut être vigilant
 
 # rubrique_id est associable à matiere_id
-# prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
+# Ignorer prof_id = 0 (lignes qui stockent la moyenne de la classe (telle que calc par Sacoche))
+
 for classe in resultats:
     query = ("SELECT p.periode_nom, os.saisie_appreciation, "
              "m.matiere_nom, os.prof_id "
@@ -227,7 +230,7 @@ for classe in resultats:
         if matiere in resultats[classe]['profs'][prof_id]['matiere']:
             continue
         # ensuite deux cas: soit ce prof n'a qu'1 matière (cas simple)
-        # soit il en a plusieurs (PC+SL, HG+EMC), donc il faut initier une liste
+        # soit il en a plusieurs (PC+ES(+SL)), HG+EMC(+DGEMC)), donc il faut initier une liste
         else:
             resultats[classe]['profs'][prof_id]['matiere'].append(matiere)
 
@@ -240,7 +243,8 @@ for classe in resultats:
 # la même colonne, il faut être vigilant
 
 # rubrique_id est associable à matiere_id
-# prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
+# Ignorer prof_id = 0 (lignes qui stockent la moyenne de la classe (telle que calc par Sacoche))
+
 for classe in resultats:
     query = ("SELECT p.periode_nom, os.saisie_appreciation, os.eleve_ou_classe_id, "
              "m.matiere_nom  "
@@ -282,4 +286,4 @@ for classe in resultats:
         resultats[classe][eleve][periode]['orientation'] = orientation
 
 with open('temp.json', 'w') as json_file:
-    json.dump(resultats['Classe test'], json_file)
+    json.dump(resultats, json_file)
