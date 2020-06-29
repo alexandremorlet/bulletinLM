@@ -2,7 +2,7 @@
 Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
 Tables utilisées: [A COMPLETER]
-TODO: Gestion des coeffs, appréciations (manque "décision"), absences
+TODO: Absences
       Faire apparaître explicitement tous les thèmes, même en l'abs d'éval
         (géré dans la partie graphique selon le référentiel
         choisi par notre équipe ?)
@@ -135,19 +135,19 @@ def calc_moyenne(notes, periode, matiere, theme):
     # A partir du dict notes[matiere][theme][periode] = (note1, note2, ...)
     # on renvoit la moyenne des notes
 
-    moyenne = 0
+    somme = 0
     nb_notes = 0
-    for note in notes[matiere][theme][periode]:
+    for note, coef in notes[matiere][theme][periode]:
         if note.isdigit(): # Ne comptent dans la moyenne que les nombres 1-4
                            # et pas les AB, NE, NN, ...
-            moyenne += int(note)
-            nb_notes += 1
+            somme += int(note)*int(coef)
+            nb_notes += int(coef)
 
             # Une fois toutes les notes lues, on peut calculer la moyenne
-            try:
-                moyenne = moyenne/nb_notes
-            except ZeroDivisionError as err:
-                moyenne = False
+    try:
+        moyenne = somme/nb_notes
+    except ZeroDivisionError as err:
+        moyenne = False
     return moyenne
 
 ### Enregistrement des évaluations pour chaque élève
@@ -164,7 +164,7 @@ for classe in resultats:
             continue
 
         query = ("SELECT rt.theme_nom, m.matiere_nom, s.saisie_note, "
-                "s.saisie_date " # on prend aussi la date pour les moyennes trimestrielles
+                "s.saisie_date, ri.item_coef " # on prend aussi la date pour les moyennes trimestrielles
                 "FROM sacoche_saisie AS s, sacoche_referentiel_item AS ri, "
                 "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd, "
                 "sacoche_matiere as m "
@@ -178,16 +178,16 @@ for classe in resultats:
         # on doit d'abord les regrouper par période
         resultat_eleve = nested_dict()
         ### resultat_eleve[nom_matiere][nom_thème] = [(note1, période1), (note2,période2), ...]
-        for theme_nom, domaine_nom, note, date in cursor:
+        for theme_nom, domaine_nom, note, date , coef in cursor:
             # A quelle période appartient la date ?
             periode = periode_note(p_dict,date)
 
             # On ajoute l'entrée au dict
             try:
-                resultat_eleve[domaine_nom][theme_nom][periode].append(note)
+                resultat_eleve[domaine_nom][theme_nom][periode].append((note,coef))
             except AttributeError as err:
                 resultat_eleve[domaine_nom][theme_nom][periode] = []
-                resultat_eleve[domaine_nom][theme_nom][periode].append(note)
+                resultat_eleve[domaine_nom][theme_nom][periode].append((note,coef))
 
 
         # A ce stade, resultat_eleve contient le détail des notes
