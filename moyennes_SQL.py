@@ -3,7 +3,6 @@ Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
 Tables utilisées: [A COMPLETER]
 TODO: Gestion des coeffs, appréciations (manque "décision"), absences
-      Gestion des périodes (trimestres)
       Faire apparaître explicitement tous les thèmes, même en l'abs d'éval
         (géré dans la partie graphique selon le référentiel
         choisi par notre équipe ?)
@@ -113,12 +112,10 @@ def periode_classe(classe):
 
 def periode_note(periodes, date):
     """
-    On a besoin d'associer une période à chaque note. Pour une classe donnée,
-    les dates de périodes sont définies dans jointure_groupe_periode, les noms
-    de périodes dans periode et les liens id/nom groupe sont dans groupe
-    Classe: g.groupe_nom, str contenant le nom de la classe
-    notes: nested_dict format resultat_eleve[matiere][theme] = ((note1,date1),(note2,date2),..)
-    On renvoit notes avec le tuple (note,date,periode)
+    On a besoin d'associer une période à chaque note.
+    On reçoit de la boucle principale un dictionnaire (periodes) contenant les
+    dates et noms des différentes périodes, qu'on utilise pour comparer à date.
+    On renvoit la str periode qui contient le nom de la période.
     """
 
     periode = 0 # normalement jamais zéro !
@@ -166,15 +163,14 @@ for classe in resultats:
                                       # et str pour tout le reste (prof, PP, appréciations, ...)
             continue
 
-        # Récupération des notes dans la table sacoche_saisie
-        query = ("SELECT rt.theme_nom, rd.domaine_nom, s.saisie_note, "
+        query = ("SELECT rt.theme_nom, m.matiere_nom, s.saisie_note, "
                 "s.saisie_date " # on prend aussi la date pour les moyennes trimestrielles
                 "FROM sacoche_saisie AS s, sacoche_referentiel_item AS ri, "
-                "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd "
-                "WHERE s.eleve_id=%d AND ri.item_id = s.item_id "
-                "AND rt.theme_id = ri.theme_id AND rd.domaine_id = rt.domaine_id "%eleve_id)
-                #"AND s.saisie_note REGEXP '^[0-9]+$' " # on enlève les AB, NE, NN, ...
-                #"LIMIT 30"%eleve_id)
+                "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd, "
+                "sacoche_matiere as m "
+                "WHERE s.eleve_id=%d " # filtre par élève
+                "AND ri.item_id = s.item_id AND rt.theme_id = ri.theme_id " # filtre par thème (ts items d'un thème)
+                "AND rd.domaine_id = rt.domaine_id AND m.matiere_id = rd.matiere_id "%eleve_id) # nom matiere
 
         cursor.execute(query)
 
@@ -224,8 +220,6 @@ for classe in resultats:
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
     cursor.execute(query)
     for periode, appr, matiere, prof_id in cursor:
-        print(periode, classe, appr, matiere, prof_id)
-        print(resultats[classe]['profs'][prof_id]['nom'], matiere)
         resultats[classe]['appreciations'][periode][matiere] = appr
 
         # On en profite pour remplir la matière de chaque prof sauf cas particuliers
@@ -259,9 +253,8 @@ for classe in resultats:
              "AND g.groupe_nom = '%s' "
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe) # nom matière
     cursor.execute(query)
+    
     for periode, appr, eleve, matiere in cursor:
-        print(periode, classe, eleve, appr, matiere)
-
         resultats[classe][eleve][periode]['appreciations'][matiere] = appr
 
 
