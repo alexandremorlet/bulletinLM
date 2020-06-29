@@ -243,7 +243,7 @@ for classe in resultats:
 # prof_id = 0 dans les row qui stockent la moyenne de la classe (telle que calc par Sacoche)
 for classe in resultats:
     query = ("SELECT p.periode_nom, os.saisie_appreciation, os.eleve_ou_classe_id, "
-             "m.matiere_nom "
+             "m.matiere_nom  "
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
              "sacoche_matiere as m, sacoche_periode as p, sacoche_user as u "
              "WHERE p.periode_id = os.periode_id " # pour p.periode_nom
@@ -253,10 +253,33 @@ for classe in resultats:
              "AND g.groupe_nom = '%s' "
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe) # nom matière
     cursor.execute(query)
-    
+
     for periode, appr, eleve, matiere in cursor:
         resultats[classe][eleve][periode]['appreciations'][matiere] = appr
 
+    ### Mentions du conseil de classe (encouragements, félicitations, avertissement ...)
+    # Une seule mention peut être rentrée dans l'interface (donc AT+AC = un élément).
+    query = ("SELECT p.periode_nom, od.decision_contenu, ojd.user_id "
+             "FROM sacoche_periode as p, sacoche_officiel_decision as od, "
+             "sacoche_officiel_jointure_decision as ojd "
+             "WHERE p.periode_id = ojd.periode_id " # Filtre période
+             "AND od.decision_id = ojd.decision_mention") # Filtre décision contenu
+    cursor.execute(query)
+
+    for periode, mention, eleve in cursor:
+        resultats[classe][eleve][periode]['mention'] = mention
+
+
+    ### Décisions du conseil de classe (passage, redoublement, ...)
+    query = ("SELECT p.periode_nom, od.decision_contenu, ojd.user_id "
+             "FROM sacoche_periode as p, sacoche_officiel_decision as od, "
+             "sacoche_officiel_jointure_decision as ojd "
+             "WHERE p.periode_id = ojd.periode_id " # Filtre période
+             "AND od.decision_id = ojd.decision_orientation") # Filtre décision contenu
+    cursor.execute(query)
+
+    for periode, orientation, eleve in cursor:
+        resultats[classe][eleve][periode]['orientation'] = orientation
 
 with open('temp.json', 'w') as json_file:
-    json.dump(resultats, json_file)
+    json.dump(resultats['Classe test'], json_file)
