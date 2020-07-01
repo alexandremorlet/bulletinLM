@@ -1,0 +1,30 @@
+Comment générer les bulletins de la classe sans note de LM sur Windows ?
+
+PREREQUIS:
+	- BDD de Sacoche (.zip décompressé), dossier SACOCHE_DUMP
+	- Python 3
+		- liste des bibliothèques Python: TODO
+	- MySQL 8
+
+SCRIPTS:
+	- sacoche_db_parser.py: génère un fichier .json contenant toutes les informations formattées (human-readable) pour générer le bulletin
+	- generateur_bulletin.py: prend le fichier .json sorti par sacoche_db_parser.py pour générer le bulletin, selon les critères décidés au sein de notre équipe
+
+GENERER LES BULLETINS:
+	- Avoir un serveur MySQL actif avec une base (/schema/) 'sacochedb'.
+	- Importer le dump de la base Sacoche. Voir ci-dessous pour la marche à suivre sur Windows.
+	- Paramétrer les premières lignes de sacoche_db_parser.py pour s'y connecter.
+	- Exécuter le script sacoche_db_parser.py.
+	- Exécuter le script generateur_bulletin.py.
+	- Imprimer les bulletins.
+
+
+IMPORTER LA BASE DANS MYSQL:
+2 étapes à suivre pour faciliter la procédure.
+https://stackoverflow.com/questions/9000147/how-to-easily-import-multiple-sql-files-into-a-mysql-database
+	- Dans cmd: 'copy /b *.sql all_files.sql' à lancer dans le dossier SACOCHE_DUMP.
+	- Dans le shell MySQL:
+		- \connect user@domain:3306
+		- \use sacochedb
+		- \sql (pour passer en mode SQL dans le shell MySQL)
+		- source "C:\path\to\all_files.sql"
