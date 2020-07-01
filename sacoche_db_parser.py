@@ -147,7 +147,7 @@ def calc_moyenne(notes, periode, matiere, theme):
     try:
         moyenne = somme/nb_notes
     except ZeroDivisionError as err:
-        moyenne = False
+        moyenne = None
     return moyenne
 
 ### Enregistrement des évaluations pour chaque élève
@@ -302,7 +302,6 @@ query = ("SELECT g.groupe_nom, oa.user_id, p.periode_nom, oa.assiduite_absence, 
          "AND g.groupe_id = u.eleve_classe_id ")
 cursor.execute(query)
 for classe, eleve, periode, abs, abs_non_reglees in cursor:
-    print(classe, eleve, periode, abs)
     #abs-abs_n_r pour avoir le nombre d'abs réglées administrativement
     if abs is None:
         continue
