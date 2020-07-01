@@ -2,10 +2,8 @@
 Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
 Tables utilisées: [A COMPLETER]
-TODO: Absences
-      Faire apparaître explicitement tous les thèmes, même en l'abs d'éval
-        (géré dans la partie graphique selon le référentiel
-        choisi par notre équipe ?)
+TODO: Bug sur la matière des profs ?
+      On peut supprimer la boucle sur la classe dans la plupart des cas ? (cf absences)
       Gestion des cas particuliers (que des absences, que des NE, NN, ...)
         Faire apparaître ABS, NE, NN ou une croix si on a un mélange de cas
 """
@@ -284,6 +282,36 @@ for classe in resultats:
 
     for periode, orientation, eleve in cursor:
         resultats[classe][eleve][periode]['orientation'] = orientation
+
+
+################
+#   Absences   #
+################
+# Dans sacoche_officiel_assiduite, on a le nb d'absences (1/2 journées ?)
+# et le nb d'abs non-justifiées. On va sauvegarder le nb d'absences sur la période
+# + le nb d'abs justifiées ("X 1/2 journées dont Y réglées adm.")
+# RQ: Absences exportées de Pronote. Sur le bulletin, c'est le nombre d'abs
+# réglées administrativement que l'on indique sur le bulletin (sinon voir doc Sacoche)
+
+query = ("SELECT g.groupe_nom, oa.user_id, p.periode_nom, oa.assiduite_absence, "
+         "oa. assiduite_absence_nj "
+         "FROM sacoche_officiel_assiduite as oa, sacoche_groupe as g, "
+         "sacoche_periode as p, sacoche_user as u "
+         "WHERE p.periode_id = oa.periode_id " # pour p.periode_nom
+         "AND u.user_id = oa.user_id " # lignes suivantes: trouver la classe (groupe_nom)
+         "AND g.groupe_id = u.eleve_classe_id ")
+cursor.execute(query)
+for classe, eleve, periode, abs, abs_non_reglees in cursor:
+    print(classe, eleve, periode, abs)
+    #abs-abs_n_r pour avoir le nombre d'abs réglées administrativement
+    if abs is None:
+        continue
+    if abs_non_reglees is None: # Peut arriver si le bilan des absences est saisi à la main
+        abs_non_reglees = 0
+    resultats[classe][eleve][periode]['absences'] = (abs,abs_non_reglees)
+
+
+
 
 with open('temp.json', 'w') as json_file:
     json.dump(resultats, json_file)
