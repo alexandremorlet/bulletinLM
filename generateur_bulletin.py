@@ -4,6 +4,34 @@ from fpdf import FPDF
 #  Fonctions  #
 ###############
 
+## Bloc appréciation
+def ligne_appreciation(x,y,appr):
+    # appr: (matiere,prof,appr)
+    # On rentre dans un rectangle de w_appreciation x 4*h_cell
+    # on a 0.5*h_cell en haut et en bas pour aérer
+    x0=x ; y0 = y
+
+    # # espace vide
+    # p.set_xy(x,y)
+    # p.cell(w_appreciation, .5*h_cell,'',ln=2)
+
+    # Affichage matière
+    p.set_font('Arial','B',8)
+    p.cell(w_prof,h_cell,appr[0],ln=2)
+
+    # Affichage enseignant
+    p.set_font('Arial','I',8)
+    p.cell(w_prof,h_cell,appr[1])
+
+    # Affichage appréciation
+    p.set_font('Arial','',7.5)
+    p.set_xy(x0+w_prof,y0)
+    p.multi_cell(w_appreciation-w_prof,h_cell,appr[2], align='L')
+
+    # Deuxième espace vide
+
+
+    p.rect(x0,y0,w_appreciation,4*h_cell)
 
 ################################
 #  Init et variables globales  #
@@ -19,15 +47,26 @@ p.set_font('Arial','',8)
 
 ### variables globales
 aff_bord = 1 # utilisé pendant la mise en place, désactiver pour imprimer un bulletin propre
-h_cell = 0.4
+h_cell = 0.4 # hauteur globale des p.cell()
 logo = "logo_lycée.png"
-w_logo = 1.7
-w_periode = 11
-w_adr_lycee = 4.5
-w_infos_classe = 4
+w_logo = 1.7 # largeur logo
+w_periode = 11 # largeur du bloc "Bulletin du trimestre X"
+w_adr_lycee = 4.5 # largeur du bloc des coordonnées du lycée
+w_infos_classe = 4 # largeur du bloc "Année sco/Classe/PP"
+w_prof = 3.4 # largeur du bloc "matiere/enseignant" dans appr
+w_appreciation = 15 # largeur du bloc appréciation (matiere+appr)
+# coordonnées du bloc "Appréciations"
+x_appr, y_appr = marge,marge+5*h_cell
+
+
 
 ### Il faut explicitement ajouter les pages, donc page 1
 p.add_page()
+
+# Test fonction
+for i in range(12):
+    ligne_appreciation(x_appr,y_appr,('SC. ECO. & SOCIALES','Mme. Professeure','Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'))
+    y_appr+=h_cell*3
 
 #################################
 #  Logo + coordonnées du lycée  #
