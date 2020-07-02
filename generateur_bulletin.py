@@ -7,13 +7,14 @@ from fpdf import FPDF
 ## Bloc appréciation
 def ligne_appreciation(x,y,appr):
     # appr: (matiere,prof,appr)
-    # On rentre dans un rectangle de w_appreciation x 4*h_cell
-    # on a 0.5*h_cell en haut et en bas pour aérer
+    # On rentre dans un rectangle de w_appreciation de largeur
+    # 3 h_cell+2*offset_appr de haut
+    # l'offset sert à aérer la présentation
     x0=x ; y0 = y
 
-    # # espace vide
-    # p.set_xy(x,y)
-    # p.cell(w_appreciation, .5*h_cell,'',ln=2)
+    # espace vide
+    p.set_xy(x,y)
+    p.cell(w_appreciation, offset_appr,'',ln=2)
 
     # Affichage matière
     p.set_font('Arial','B',8)
@@ -25,13 +26,13 @@ def ligne_appreciation(x,y,appr):
 
     # Affichage appréciation
     p.set_font('Arial','',7.5)
-    p.set_xy(x0+w_prof,y0)
+    p.set_xy(x0+w_prof,y0+offset_appr)
     p.multi_cell(w_appreciation-w_prof,h_cell,appr[2], align='L')
 
-    # Deuxième espace vide
+    # # Deuxième espace vide
+    # p.set_xy(x0,y0+3.5*h_cell)
 
-
-    p.rect(x0,y0,w_appreciation,4*h_cell)
+    p.rect(x0,y0,w_appreciation,height_appr)
 
 ################################
 #  Init et variables globales  #
@@ -55,6 +56,8 @@ w_adr_lycee = 4.5 # largeur du bloc des coordonnées du lycée
 w_infos_classe = 4 # largeur du bloc "Année sco/Classe/PP"
 w_prof = 3.4 # largeur du bloc "matiere/enseignant" dans appr
 w_appreciation = 15 # largeur du bloc appréciation (matiere+appr)
+offset_appr = h_cell/6 # espace vide horizontal pour aérer les appréciations
+height_appr = 3*h_cell + 2*offset_appr # hauteur d'un bloc "appréciation"
 # coordonnées du bloc "Appréciations"
 x_appr, y_appr = marge,marge+5*h_cell
 
@@ -62,11 +65,6 @@ x_appr, y_appr = marge,marge+5*h_cell
 
 ### Il faut explicitement ajouter les pages, donc page 1
 p.add_page()
-
-# Test fonction
-for i in range(12):
-    ligne_appreciation(x_appr,y_appr,('SC. ECO. & SOCIALES','Mme. Professeure','Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'))
-    y_appr+=h_cell*3
 
 #################################
 #  Logo + coordonnées du lycée  #
@@ -120,6 +118,14 @@ p.set_xy(p.get_x(),p.get_y()-h_cell)
 texte_viesco = "Absences : 3 demi-journées dont 1 non-réglée.\nAppréciation : Rien à signaler."
 p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
 
+########################
+#  Bloc appréciations  #
+########################
+
+# Test fonction
+for i in range(12):
+    ligne_appreciation(x_appr,y_appr,('SC. ECO. & SOCIALES','Mme. Professeure','Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'))
+    y_appr+=height_appr
 
 ### Création du fichier
 p.output('bulletin.pdf', 'F')
