@@ -1,29 +1,22 @@
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.units import cm
-from reportlab.platypus import Image
+from fpdf import FPDF
 
+# ################################
+# #  Init et variables globales  #
+# ################################
+### Construction de l'objet FPDF
+p = FPDF('L','cm','A4')
+marge = 0.64
+height, width = (21.0,29.7)
+p.set_margins(marge,marge,marge) # marges (pas de marge_bottom, mais ligne suivante aide)
+p.set_auto_page_break(False) # empêcher les page break automatiques (donc ~ pas de marge)
 
-################################
-#  Init et variables globales  #
-################################
-c = canvas.Canvas("bulletin.pdf", pagesize=landscape(A4))
-height, width = A4 # ! usuellement w,h=A4, mais on réfléchit en paysage ici
-
-marge = 0.64*cm # marges étroites
+### variables globales
 logo = "logo_lycée.png"
 
-#######################
-#  Coordonnées lycée  #
-#######################
-## En haut à gauche de la page, logo + adresse du lycée
-# LOGO
-height_logo = 1.7*cm
-width_logo = 1.8*cm
-c.drawImage(logo,marge,height-marge-height_logo,height=height_logo, width=1.8*cm)
+
+p.add_page()
 
 
+p.image('logo_lycée.png',marge,marge, w=1.7)
 
-c.showPage() # enregistre le canvas (page courante)
-             # commence une nouvelle page si suivi d'autres commandes
-c.save()     # génère le PDF
+p.output('bulletin.pdf', 'F')
