@@ -111,13 +111,13 @@ def aff_moyenne(moyenne):
     # Pour l'instant: on prend un seuil tous les 0.75 (largeur intervalle/nb couleurs)
 
     if moyenne < 1.75: # Mauvais = rouge
-        r,g,b = (255,0,0)
+        r,g,b = rouge
     if moyenne >= 1.75 and moyenne < 2.5: # moyen: orange
-        r,g,b = (235,200,53)
+        r,g,b = orange
     if moyenne >= 2.5 and moyenne < 3.25: # bien: vert
-        r,g,b = (203,253,93)
+        r,g,b = vert_clair
     if moyenne >= 3.25: # très bien: vert foncé
-        r,g,b = (0,255,0)
+        r,g,b = vert_fonce
 
     # Centre du rectangle: (w_bloc/6,h_cell/2)
     # Position du curseur: (x,y)
@@ -133,6 +133,36 @@ def aff_moyenne(moyenne):
 
     return
 
+def legende(x,y):
+    # Ligne qui va sous la dernière ligne de bloc éval
+    w = (3*w_bloc+2*w_offset_blocs-4*h_cell)/4 # var locale pour la largeur des cellules
+    o = w+h_cell # pour décaler d'assez chaque bloc
+
+    p.set_font('Arial','I',6)
+
+    r,g,b = rouge
+    p.set_fill_color(r,g,b)
+    p.rect(x,y,h_cell,h_cell,'F')
+    p.set_xy(x+h_cell,y)
+    p.cell(w,h_cell,'Très insuffisant',aff_bord)
+
+    r,g,b = orange
+    p.set_fill_color(r,g,b)
+    p.rect(x+o,y,h_cell,h_cell,'F')
+    p.set_xy(x+w+2*h_cell,y)
+    p.cell(w,h_cell,'Insuffisamment maîtrisé',aff_bord)
+
+    r,g,b = vert_clair
+    p.set_fill_color(r,g,b)
+    p.rect(x+2*o,y,h_cell,h_cell,'F')
+    p.set_xy(x+2*o+h_cell,y)
+    p.cell(w,h_cell,'Satisfaisant',aff_bord)
+
+    r,g,b = vert_fonce
+    p.set_fill_color(r,g,b)
+    p.rect(x+3*o,y,h_cell,h_cell,'F')
+    p.set_xy(x+3*o+h_cell,y)
+    p.cell(w,h_cell,'Très satisfaisant',aff_bord)
 
 ################################
 #  Init et variables globales  #
@@ -164,23 +194,28 @@ height_appr = 3*h_cell + 2*offset_appr # hauteur d'un bloc "appréciation"
 x_appr, y_appr = marge,marge+5*h_cell # coordonnées du bloc "Appréciations"
 
 # Appréciation direction/mention
-offset_appr_dir = 1.2
+offset_appr_dir = 0.4
 x_appr_dir, y_appr_dir = marge+marge+w_appreciation, height-marge-8*h_cell-offset_appr_dir
 # Signature chef d'etbl
 signature = 'fleur.png' # path de la signature
 h_signature = 2*h_cell # largeur de la signature
 x_chef = width-marge-2*w_prof # position du texte "chef"
 y_chef = height-marge-2*h_cell-offset_appr_dir
+
 # Bloc évaluation (matiere+couleur/thème)
 w_bloc = 4
 x_bloc = x_appr+w_appreciation+marge
 y_bloc = y_appr
 w_offset_blocs = 0.3 # ecart horizontal entre deux blocs
 h_offset_blocs = 0.5 # ecart vertical entre deux blocs
+rouge = (255,0,0)
+orange = (250,145,56)
+vert_clair = (181,213,0)
+vert_fonce = (48,145,52)
 
 lorem = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'
 matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
-moyenne_matiere = {"Restituer":2,"S'informer": 'AB',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
+moyenne_matiere = {"Restituer":2,"S'informer": 'Abs',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
 
 ### Il faut explicitement ajouter les pages, donc page 1
 p.add_page()
@@ -277,6 +312,9 @@ temp_dict = {
     'OPTION': moyenne_matiere
 }
 ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
+
+legende(x_bloc,y_bloc + 4*(7*h_cell + h_offset_blocs))
+
 #############################
 #  Appr. générale/mentions  #
 #############################
