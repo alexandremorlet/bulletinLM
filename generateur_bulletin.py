@@ -163,8 +163,8 @@ offset_appr = h_cell/6 # espace vide horizontal pour aérer les appréciations
 height_appr = 3*h_cell + 2*offset_appr # hauteur d'un bloc "appréciation"
 x_appr, y_appr = marge,marge+5*h_cell # coordonnées du bloc "Appréciations"
 # Appréciation direction/mention
-x_appr_dir, y_appr_dir = marge, height-marge-4*h_cell
-x_mention = x_appr_dir+marge+w_appreciation
+x_appr_dir, y_appr_dir = marge+marge+w_appreciation, height-marge-8*h_cell
+
 # Signature chef d'etbl
 signature = 'fleur.png' # path de la signature
 h_signature = 2*h_cell # largeur de la signature
@@ -269,12 +269,12 @@ p.set_font('Arial','B',8)
 p.set_xy(x_appr_dir,y_appr_dir)
 p.cell(w_prof,h_cell,'Appréciation globale :',aff_bord,0)
 p.set_font('Arial','',8)
-p.multi_cell(w_appreciation-w_prof,h_cell,lorem,aff_bord,'L')
+p.multi_cell(0,h_cell,lorem,aff_bord,'L')
 
 # Mention
 # TODO: Question à poser: "mention:" apparaît toujours même si pas de mention ?
 p.set_font('Arial','B',8)
-p.set_xy(x_mention,y_appr_dir)
+p.set_xy(x_appr_dir,y_appr_dir+4*h_cell)
 p.cell(w_prof/2,h_cell,'Mention :',aff_bord,0)
 p.set_font('Arial','',8)
 p.cell(0,h_cell,'Félicitations du conseil de classe',aff_bord,0) # TODO var
