@@ -147,7 +147,7 @@ p.set_auto_page_break(False) # empêcher les page break automatiques (donc ~ pas
 p.set_font('Arial','',8)
 
 ### variables globales
-aff_bord = 1 # utilisé pendant la mise en place, désactiver pour imprimer un bulletin propre
+aff_bord = 0 # utilisé pendant la mise en place, désactiver pour imprimer un bulletin propre
 h_cell = 0.4 # hauteur globale des p.cell()
 # Logo
 logo = "logo_lycée.png"
@@ -159,7 +159,7 @@ w_infos_classe = 4 # largeur du bloc "Année sco/Classe/PP"
 # Appréciations prof
 w_prof = 3.4 # largeur du bloc "matiere/enseignant" dans appr
 w_appreciation = 15 # largeur du bloc appréciation (matiere+appr)
-offset_appr = h_cell/6 # espace vide horizontal pour aérer les appréciations
+offset_appr = h_cell/4 # espace vide horizontal pour aérer les appréciations
 height_appr = 3*h_cell + 2*offset_appr # hauteur d'un bloc "appréciation"
 x_appr, y_appr = marge,marge+5*h_cell # coordonnées du bloc "Appréciations"
 # Appréciation direction/mention
