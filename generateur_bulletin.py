@@ -162,14 +162,15 @@ w_appreciation = 15 # largeur du bloc appréciation (matiere+appr)
 offset_appr = h_cell/4 # espace vide horizontal pour aérer les appréciations
 height_appr = 3*h_cell + 2*offset_appr # hauteur d'un bloc "appréciation"
 x_appr, y_appr = marge,marge+5*h_cell # coordonnées du bloc "Appréciations"
-# Appréciation direction/mention
-x_appr_dir, y_appr_dir = marge+marge+w_appreciation, height-marge-8*h_cell
 
+# Appréciation direction/mention
+offset_appr_dir = 1.2
+x_appr_dir, y_appr_dir = marge+marge+w_appreciation, height-marge-8*h_cell-offset_appr_dir
 # Signature chef d'etbl
 signature = 'fleur.png' # path de la signature
 h_signature = 2*h_cell # largeur de la signature
 x_chef = width-marge-2*w_prof # position du texte "chef"
-y_chef = height-marge-2*h_cell
+y_chef = height-marge-2*h_cell-offset_appr_dir
 # Bloc évaluation (matiere+couleur/thème)
 w_bloc = 4
 x_bloc = x_appr+w_appreciation+marge
@@ -232,6 +233,7 @@ infos_perso = "Né le 01/01/2005\nINE : 0123456789A"
 p.multi_cell(w_periode-w_infos_classe,h_cell,infos_perso,aff_bord,'L')
 
 # Absences + appréciation vie sco (TODO)
+# TODO: Passer l'appréciation vie sco sur une plus petite police (8 comme appr dir)
 p.set_xy(p.get_x(),p.get_y()-h_cell)
 texte_viesco = "Absences : 3 demi-journées dont 1 non-réglée.\nAppréciation : Rien à signaler."
 p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
@@ -252,13 +254,28 @@ for i in range(12):
 
 # Vu qu'on a un template fixe, on va se contenter d'appeler des fonctions bien définies
 temp_dict = {
-    'Matière 1': moyenne_matiere,
-    'Matière 2': moyenne_matiere,
-    'Matiere 3': moyenne_matiere
+    'FRANCAIS': moyenne_matiere,
+    'LVA ANGLAIS': moyenne_matiere,
+    'LVB ESPAGNOL': moyenne_matiere
 }
 ligne_eval(x_bloc,y_bloc,temp_dict)
+temp_dict = {
+    'HIST.-GEOGRAPHIE': moyenne_matiere,
+    'ENS. MORAL & CIV.': moyenne_matiere,
+    'SC. ECO. & SOCIALES': moyenne_matiere
+}
 ligne_eval(x_bloc,y_bloc + 7*h_cell + h_offset_blocs, temp_dict)
+temp_dict = {
+    'MATHEMATIQUES': moyenne_matiere,
+    'PHYSIQUE-CHIMIE': moyenne_matiere,
+    'SC. VIE & TERRE': moyenne_matiere
+}
 ligne_eval(x_bloc,y_bloc + 2*(7*h_cell + h_offset_blocs), temp_dict)
+temp_dict = {
+    'ED. PHY. & SPORTIVE': moyenne_matiere,
+    'SC. NUM. & TECHNO.': moyenne_matiere,
+    'OPTION': moyenne_matiere
+}
 ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
 #############################
 #  Appr. générale/mentions  #
