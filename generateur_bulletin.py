@@ -32,6 +32,91 @@ def ligne_appreciation(x,y,appr):
     # Bordure autour du bloc
     p.rect(x0,y0,w_appreciation,height_appr)
 
+
+def bloc_eval(x,y,matiere,moyennes):
+    # matiere: str qui apparaîtra en haut du bloc
+    # moyennes: dict format {'Restituer': 2.1;'Utiliser': 3}
+    # donc thème -> moyenne (entre 1 et 4)
+
+    x0=x ; y0 = y
+    p.set_xy(x,y)
+
+    # Case avec le nom de la matière
+    p.set_font('Arial','B',9)
+    p.set_fill_color(192) # niveau de gris
+    p.cell(w_bloc,h_cell,matiere,1,2,'C',fill=True)
+
+    # Cases avec les noms des thèmes
+    p.set_font('Arial','',8)
+    p.cell(2*w_bloc/3,h_cell,'Restituer',aff_bord,2,'L')
+    p.cell(2*w_bloc/3,h_cell,"S'informer",aff_bord,2,'L')
+    p.cell(2*w_bloc/3,h_cell,'Communiquer',aff_bord,2,'L')
+    p.cell(2*w_bloc/3,h_cell,'Raisonner',aff_bord,2,'L')
+    p.cell(2*w_bloc/3,h_cell,"S'impliquer",aff_bord,2,'L')
+    p.cell(2*w_bloc/3,h_cell,'Utiliser',aff_bord,2,'L')
+
+    # Cases avec les couleurs
+    p.set_xy(x0+2*w_bloc/3,y0+h_cell)
+    aff_moyenne(moyennes['Restituer'])
+    aff_moyenne(moyennes["S'informer"])
+    aff_moyenne(moyennes['Communiquer'])
+    aff_moyenne(moyennes['Raisonner'])
+    aff_moyenne(moyennes["S'impliquer"])
+    aff_moyenne(moyennes['Utiliser'])
+
+    # Bordure autour du bloc
+    p.rect(x0,y0,w_bloc,7*h_cell)
+
+
+def aff_moyenne(moyenne):
+    # Crée et remplit l'objet (cell ou rect+fill) pour afficher la moyenne d'un thème
+    # Le curseur est placé à y=y+h_cell à la fin de la fonction
+    # moyenne: float entre 1 et 4
+    # hypothèses: le curseur est en haut à gauche de l'espace réservé à la moyenne
+    #             la largeur prévue est w_bloc/3
+    #             la hauteur est h_cell
+
+    # D'abord: Est-ce que la moyenne est None ? (thème non évalué)
+    # Dans ce cas, on n'affiche rien
+    if moyenne is None:
+        p.cell(w_bloc/3,h_cell,'',aff_bord,2) # moyen le plus simple de faire ce qu'on veut
+        return
+
+    # Ensuite: Est-ce que la moyenne est un nombre ? Si c'est un str, on l'affiche
+    # (par ex Ab, NE, NN)
+    if isinstance(moyenne,str):
+        p.set_font('Arial','',8)
+        p.cell(w_bloc/3,h_cell,moyenne,aff_bord,2,'C')
+        return
+
+    # Enfin: Si on a bien un nombre, prendre la couleur qui va bien
+    # Todo: passer ces seuils en variables globales
+    # Pour l'instant: on prend un seuil tous les 0.75 (largeur intervalle/nb couleurs)
+
+    if moyenne < 1.75: # Mauvais = rouge
+        r,g,b = (255,0,0)
+    if moyenne >= 1.75 and moyenne < 2.5: # moyen: orange
+        r,g,b = (235,200,53)
+    if moyenne >= 2.5 and moyenne < 3.25: # bien: vert
+        r,g,b = (203,253,93)
+    if moyenne >= 3.25: # très bien: vert foncé
+        r,g,b = (0,255,0)
+
+    # Centre du rectangle: (w_bloc/6,h_cell/2)
+    # Position du curseur: (x,y)
+    x0,y0 = p.get_x(),p.get_y()
+    # Taille du rectangle: (0.8,2*h_cell/3)
+    # Position du coin supérieur gauche du rectangle: (x+w_bloc/6-0.8,y+h_cell/2-2*h_cell/3)
+    x=p.get_x()+w_bloc/6-0.8/2 ; y=p.get_y()+h_cell/2-2*h_cell/3/2
+    p.set_fill_color(r,g,b)
+    p.rect(x,y,0.8,2*h_cell/3,'F')
+
+    # On met le curseur où il faut
+    p.set_xy(x0,y0+h_cell)
+
+    return
+
+
 ################################
 #  Init et variables globales  #
 ################################
@@ -68,9 +153,14 @@ signature = 'fleur.png' # path de la signature
 h_signature = 2*h_cell # largeur de la signature
 x_chef = width-marge-2*w_prof # position du texte "chef"
 y_chef = height-marge-2*h_cell
-
+# Bloc évaluation (matiere+couleur/thème)
+w_bloc = 4
+x_bloc = x_appr+w_appreciation+marge
+y_bloc = y_appr
 
 lorem = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'
+matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
+moyenne_matiere = {"Restituer":2,"S'informer": 'AB',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
 
 ### Il faut explicitement ajouter les pages, donc page 1
 p.add_page()
@@ -133,7 +223,7 @@ p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
 
 # Test fonction
 for i in range(12):
-    ligne_appreciation(x_appr,y_appr,('SC. ECO. & SOCIALES','Mme. Professeure',lorem))
+    ligne_appreciation(x_appr,y_appr,(matieres[i],'Mme. Professeure',lorem))
     y_appr+=height_appr
 
 # Ne pas oublier de re-régler la police après avoir appelé ligne_appreciation
@@ -165,6 +255,10 @@ p.cell(0,h_cell,'Félicitations du conseil de classe',aff_bord,0) # TODO var
 p.set_xy(x_chef,y_chef)
 p.cell(w_prof,h_cell,"Le chef d'établissement",aff_bord,0)
 p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
+
+
+bloc_eval(x_bloc,y_bloc,'matiere',moyenne_matiere)
+
 
 ### Création du fichier
 p.output('bulletin.pdf', 'F')
