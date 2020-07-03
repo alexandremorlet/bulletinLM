@@ -67,6 +67,23 @@ def bloc_eval(x,y,matiere,moyennes):
     # Bordure autour du bloc
     p.rect(x0,y0,w_bloc,7*h_cell)
 
+def ligne_eval(x,y,dict):
+    # Construit une ligne avec 3 blocs éval
+    # x,y: coordonnées du coin supérieur gauche du premier bloc
+    # dict: dico format d[matiere]={'theme1'=moyenne, 'theme2'=moyenne, ...}
+    # Hyp: les matieres sont dans l'ordre souhaitées par le template
+    # RQ: Python 3.7+: ordre préservé dans les dictionnaires
+
+    matieres = list(dict)
+    bloc_eval(x,y,matieres[0],dict[matieres[0]])
+
+    # Coordonnées pour le bloc 2
+    x2 = x+w_bloc+w_offset_blocs
+    bloc_eval(x2,y,matieres[1],dict[matieres[1]])
+
+    # Coordonnées pour le bloc 3
+    x3 = x2+w_bloc+w_offset_blocs
+    bloc_eval(x3,y,matieres[2],dict[matieres[2]])
 
 def aff_moyenne(moyenne):
     # Crée et remplit l'objet (cell ou rect+fill) pour afficher la moyenne d'un thème
@@ -157,6 +174,8 @@ y_chef = height-marge-2*h_cell
 w_bloc = 4
 x_bloc = x_appr+w_appreciation+marge
 y_bloc = y_appr
+w_offset_blocs = 0.3 # ecart horizontal entre deux blocs
+h_offset_blocs = 0.5 # ecart vertical entre deux blocs
 
 lorem = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'
 matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
@@ -226,9 +245,21 @@ for i in range(12):
     ligne_appreciation(x_appr,y_appr,(matieres[i],'Mme. Professeure',lorem))
     y_appr+=height_appr
 
-# Ne pas oublier de re-régler la police après avoir appelé ligne_appreciation
-p.set_font('Arial','',8)
 
+###################
+#  Bloc moyennes  #
+###################
+
+# Vu qu'on a un template fixe, on va se contenter d'appeler des fonctions bien définies
+temp_dict = {
+    'Matière 1': moyenne_matiere,
+    'Matière 2': moyenne_matiere,
+    'Matiere 3': moyenne_matiere
+}
+ligne_eval(x_bloc,y_bloc,temp_dict)
+ligne_eval(x_bloc,y_bloc + 7*h_cell + h_offset_blocs, temp_dict)
+ligne_eval(x_bloc,y_bloc + 2*(7*h_cell + h_offset_blocs), temp_dict)
+ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
 #############################
 #  Appr. générale/mentions  #
 #############################
@@ -257,7 +288,6 @@ p.cell(w_prof,h_cell,"Le chef d'établissement",aff_bord,0)
 p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
 
 
-bloc_eval(x_bloc,y_bloc,'matiere',moyenne_matiere)
 
 
 ### Création du fichier
