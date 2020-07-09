@@ -1,6 +1,9 @@
 Ce dépôt contient les scripts utilisés par la classe à compétences du lycée Louise Michel (94) pour générer les bulletins scolaires. Les notes sont extraites de la base de données de [SACoche](https://sacoche.sesamath.net/), utilisé pour rentrer les évaluations au fur et à mesure.
 Le format du bulletin est très rigide, l'équipe pédagogique ayant choisi d'évaluer les six mêmes compétences ("thème" dans la BDD SACoche).
 
+## Maquette du bulletin
+![Maquette](https://github.com/alexandremorlet/bulletinLM/raw/master/maquette.jpg "Maquette du bulletin")
+
 ## Prérequis
 - Dump de la BDD de SACoche (exportée par l'administrateur)
 - Python 3
