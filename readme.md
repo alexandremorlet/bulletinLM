@@ -6,7 +6,7 @@ Le format du bulletin est très rigide, l'équipe pédagogique ayant choisi d'é
 
 ## Prérequis
 - Dump de la BDD de SACoche (exportée par l'administrateur)
-- Python 3
+- Python 3 (+ FPDF2)
 - MySQL 8
 
 ## Scripts
