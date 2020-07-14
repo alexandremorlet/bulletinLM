@@ -8,15 +8,6 @@ import re
 #  Fonctions  #
 ###############
 
-### Construction de l'objet FPDF
-# def init_bulletin():
-#     p = FPDF('L','cm','A4')
-#     p.set_margins(marge,marge,marge) # marges (pas de marge_bottom, mais ligne suivante aide)
-#     p.set_auto_page_break(False) # empêcher les page break automatiques (donc ~ pas de marge en bas)
-#
-#     p.set_font('Arial','',8)
-#
-#     return p
 
 def make_bulletin():
     global y_appr
@@ -59,9 +50,13 @@ def make_bulletin():
     # Infos de la classe
     p.set_font('Arial','',9)
     p.set_xy(x0,y0) # on commence au début de la ligne
-    # TODO: Variables classe et PP (+ année scolaire ?)
-    infos_classe = "Année scolaire 2020-2021\nClasse: Classe test\nPP: Mme Professeure"
-    p.multi_cell(w_infos_classe,h_cell,infos_classe,aff_bord,'L',False)
+    # infos_classe = "Année scolaire 2020-2021\nClasse: Classe test\nPP: Mme Professeure"
+    # p.multi_cell(w_infos_classe,h_cell,infos_classe,aff_bord,'L',False)
+    p.cell(w_infos_classe,h_cell,'Année scolaire: %s'%annee_sco,aff_bord,2,'L')
+    p.cell(w_infos_classe,h_cell,'Classe: %s'%classe,aff_bord,2,'L')
+    p.cell(w_infos_classe,h_cell,'PP: %s'%prof_principal,aff_bord,2,'L')
+
+    p.set_xy(x0+w_infos_classe,y0)
 
     # prénom élève
     p.set_font('Arial','B',9)
@@ -373,6 +368,18 @@ with open("temp.json","r") as fichier_resultats:
 #  Variables de chaque bulletin  #
 ##################################
 periode = "Bulletin du 1er trimestre"
+annee_sco = '2020-2021'
+
+
+# TODO: Boucle sur les classes
+# for classe in resultats:
+classe = 'Classe test'
+for prof in resultats[classe]['profs']:
+    if resultats[classe]['profs'][prof]['pp']:
+        prof_principal = resultats[classe]['profs'][prof]['nom']
+        print('pp ',prof_principal)
+        break
+
 
 # Dans chaque entrée resultats[classe], les élèves sont repérés par leur id
 # les autres infos ont des str en key
@@ -381,7 +388,7 @@ for k in resultats['Classe test']:
     match = re.search('^[0-9]+',k)
     if match is not None:
         eleves.append(match.group())
-
+        
 for eleve in eleves:
     nom = resultats['Classe test'][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
     print(nom)
