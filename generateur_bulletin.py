@@ -79,8 +79,7 @@ def make_bulletin():
 
     # Test fonction
     for i in range(12):
-        ligne_appreciation(x_appr,y_appr,(matieres[i],'Mme. Professeure',lorem))
-        y_appr+=height_appr
+        ligne_appreciation(x_appr,y_appr+i*height_appr,(matieres[i],'Mme. Professeure',lorem))
 
 
     ###################
@@ -361,9 +360,6 @@ with open("temp.json","r") as fichier_resultats:
     resultats = json.load(fichier_resultats)
 
 
-
-# p = init_bulletin()
-
 ##################################
 #  Variables de chaque bulletin  #
 ##################################
@@ -388,7 +384,7 @@ for k in resultats['Classe test']:
     match = re.search('^[0-9]+',k)
     if match is not None:
         eleves.append(match.group())
-        
+
 for eleve in eleves:
     nom = resultats['Classe test'][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
     print(nom)
