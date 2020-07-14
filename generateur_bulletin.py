@@ -1,4 +1,8 @@
 from fpdf import FPDF
+import json
+import re
+
+# Todo: Verso du bulletin = Adresse des parents pour glisser le bulletin dans une enveloppe à fenêtre.
 
 ###############
 #  Fonctions  #
@@ -167,16 +171,9 @@ def legende(x,y):
 ################################
 #  Init et variables globales  #
 ################################
-### Construction de l'objet FPDF
-p = FPDF('L','cm','A4')
+### variables globales
 marge = 0.64
 height, width = (21.0,29.7)
-p.set_margins(marge,marge,marge) # marges (pas de marge_bottom, mais ligne suivante aide)
-p.set_auto_page_break(False) # empêcher les page break automatiques (donc ~ pas de marge en bas)
-
-p.set_font('Arial','',8)
-
-### variables globales
 aff_bord = 0 # utilisé pendant la mise en place, désactiver pour imprimer un bulletin propre
 h_cell = 0.4 # hauteur globale des p.cell()
 # Logo
@@ -191,7 +188,7 @@ w_prof = 3.4 # largeur du bloc "matiere/enseignant" dans appr
 w_appreciation = 15 # largeur du bloc appréciation (matiere+appr)
 offset_appr = h_cell/4 # espace vide horizontal pour aérer les appréciations
 height_appr = 3*h_cell + 2*offset_appr # hauteur d'un bloc "appréciation"
-x_appr, y_appr = marge,marge+5*h_cell # coordonnées du bloc "Appréciations"
+x_appr, y_appr = marge, marge+5*h_cell # coordonnées du bloc "Appréciations"
 
 # Appréciation direction/mention
 offset_appr_dir = 0.4
@@ -217,133 +214,169 @@ lorem = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commod
 matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
 moyenne_matiere = {"Restituer":2,"S'informer": 'Abs',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
 
-### Il faut explicitement ajouter les pages, donc page 1
-p.add_page()
-
-#################################
-#  Logo + coordonnées du lycée  #
-#################################
-
-# Logo
-p.image('logo_lycée.png',marge,marge, w=w_logo)
-
-# Adresse
-p.set_font('Arial','',7)
-p.set_xy(w_logo+marge,marge)
-adr_lycee = "Académie de Créteil\nLycée Polyvalent Louise Michel\n7 Rue Pierre Marie Derrien\n94500 Champigny-sur-Marne\nTél. : 01.48.82.07.35"
-p.multi_cell(w_adr_lycee,h_cell-0.1,adr_lycee,aff_bord,'C',False)
-
-###############################
-#  En-tête période + vie sco  #
-###############################
-
-# Titres en gras: bulletin de période, vie scolaire
-# TODO: Période
-p.set_font('Arial','B',9)
-p.cell(w_periode,h_cell,"Bulletin du 1er trimestre",aff_bord,0,'C')
-p.cell(0,h_cell,"Vie scolaire",aff_bord,0,'C')
-
-# ligne horizontale
-x0 = marge+w_logo+w_adr_lycee
-x1 = width-marge
-y0 = marge+h_cell
-y1 = marge+h_cell
-p.line(x0,y0,x1,y1)
-
-# Infos de la classe
-p.set_font('Arial','',9)
-p.set_xy(x0,y0) # on commence au début de la ligne
-# TODO: Variables classe et PP (+ année scolaire ?)
-infos_classe = "Année scolaire 2020-2021\nClasse: Classe test\nPP: Mme Professeure"
-p.multi_cell(w_infos_classe,h_cell,infos_classe,aff_bord,'L',False)
-
-# TODO: prénom
-p.set_font('Arial','B',9)
-prenom = "DUPONT Jean Enzo Kevin"
-p.cell(w_periode-w_infos_classe,h_cell,prenom,aff_bord,2,'L')
-
-# Infos persos élève (TODO)
-p.set_font('Arial','',9)
-infos_perso = "Né le 01/01/2005\nINE : 0123456789A"
-p.multi_cell(w_periode-w_infos_classe,h_cell,infos_perso,aff_bord,'L')
-
-# Absences + appréciation vie sco (TODO)
-# TODO: Passer l'appréciation vie sco sur une plus petite police (8 comme appr dir)
-p.set_xy(p.get_x(),p.get_y()-h_cell)
-texte_viesco = "Absences : 3 demi-journées dont 1 non-réglée.\nAppréciation : Rien à signaler."
-p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
-
-########################
-#  Bloc appréciations  #
-########################
-
-# Test fonction
-for i in range(12):
-    ligne_appreciation(x_appr,y_appr,(matieres[i],'Mme. Professeure',lorem))
-    y_appr+=height_appr
-
-
-###################
-#  Bloc moyennes  #
-###################
-
-# Vu qu'on a un template fixe, on va se contenter d'appeler des fonctions bien définies
-temp_dict = {
-    'FRANCAIS': moyenne_matiere,
-    'LVA ANGLAIS': moyenne_matiere,
-    'LVB ESPAGNOL': moyenne_matiere
-}
-ligne_eval(x_bloc,y_bloc,temp_dict)
-temp_dict = {
-    'HIST.-GEOGRAPHIE': moyenne_matiere,
-    'ENS. MORAL & CIV.': moyenne_matiere,
-    'SC. ECO. & SOCIALES': moyenne_matiere
-}
-ligne_eval(x_bloc,y_bloc + 7*h_cell + h_offset_blocs, temp_dict)
-temp_dict = {
-    'MATHEMATIQUES': moyenne_matiere,
-    'PHYSIQUE-CHIMIE': moyenne_matiere,
-    'SC. VIE & TERRE': moyenne_matiere
-}
-ligne_eval(x_bloc,y_bloc + 2*(7*h_cell + h_offset_blocs), temp_dict)
-temp_dict = {
-    'ED. PHY. & SPORTIVE': moyenne_matiere,
-    'SC. NUM. & TECHNO.': moyenne_matiere,
-    'OPTION': moyenne_matiere
-}
-ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
-
-legende(x_bloc,y_bloc + 4*(7*h_cell + h_offset_blocs))
-
 #############################
-#  Appr. générale/mentions  #
+#  Lecture du fichier JSON  #
 #############################
+with open("temp.json","r") as fichier_resultats:
+    resultats = json.load(fichier_resultats)
+    print(resultats['Classe test'])
 
-# Appréciation de la direction/PP
-p.set_font('Arial','B',8)
-p.set_xy(x_appr_dir,y_appr_dir)
-p.cell(w_prof,h_cell,'Appréciation globale :',aff_bord,0)
-p.set_font('Arial','',8)
-p.multi_cell(0,h_cell,lorem,aff_bord,'L')
+##################################
+#  Variables de chaque bulletin  #
+##################################
+periode = "Bulletin du 1er trimestre"
+eleves = []
+for k in resultats['Classe test']:
+    match = re.search('^[0-9]+',k)
+    if match is not None:
+        eleves.append(match.group())
 
-# Mention
-# TODO: Question à poser: "mention:" apparaît toujours même si pas de mention ?
-p.set_font('Arial','B',8)
-p.set_xy(x_appr_dir,y_appr_dir+4*h_cell)
-p.cell(w_prof/2,h_cell,'Mention :',aff_bord,0)
-p.set_font('Arial','',8)
-p.cell(0,h_cell,'Félicitations du conseil de classe',aff_bord,0) # TODO var
-
-####################
-#  Signature chef  #
-####################
-# Mention "le chef d'établissement" + signature
-p.set_xy(x_chef,y_chef)
-p.cell(w_prof,h_cell,"Le chef d'établissement",aff_bord,0)
-p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
+print(eleves)
+for eleve in eleves:
+    nom = resultats['Classe test'][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
+    print(nom)
 
 
 
+### Construction de l'objet FPDF
+def init_bulletin():
+    p = FPDF('L','cm','A4')
+    p.set_margins(marge,marge,marge) # marges (pas de marge_bottom, mais ligne suivante aide)
+    p.set_auto_page_break(False) # empêcher les page break automatiques (donc ~ pas de marge en bas)
 
-### Création du fichier
-p.output('bulletin.pdf', 'F')
+    p.set_font('Arial','',8)
+
+    return p
+
+def make_bulletin(p):
+    global y_appr
+    p.add_page()
+
+    #################################
+    #  Logo + coordonnées du lycée  #
+    #################################
+
+    # Logo
+    p.image('logo_lycée.png',marge,marge, w=w_logo)
+
+    # Adresse
+    p.set_font('Arial','',7)
+    p.set_xy(w_logo+marge,marge)
+    adr_lycee = "Académie de Créteil\nLycée Polyvalent Louise Michel\n7 Rue Pierre Marie Derrien\n94500 Champigny-sur-Marne\nTél. : 01.48.82.07.35"
+    p.multi_cell(w_adr_lycee,h_cell-0.1,adr_lycee,aff_bord,'C',False)
+
+    ###############################
+    #  En-tête période + vie sco  #
+    ###############################
+
+    # Titres en gras: bulletin de période, vie scolaire
+    p.set_font('Arial','B',9)
+    p.cell(w_periode,h_cell,periode,aff_bord,0,'C')
+    p.cell(0,h_cell,"Vie scolaire",aff_bord,0,'C')
+
+    # ligne horizontale
+    x0 = marge+w_logo+w_adr_lycee
+    x1 = width-marge
+    y0 = marge+h_cell
+    y1 = marge+h_cell
+    p.line(x0,y0,x1,y1)
+
+    # Infos de la classe
+    p.set_font('Arial','',9)
+    p.set_xy(x0,y0) # on commence au début de la ligne
+    # TODO: Variables classe et PP (+ année scolaire ?)
+    infos_classe = "Année scolaire 2020-2021\nClasse: Classe test\nPP: Mme Professeure"
+    p.multi_cell(w_infos_classe,h_cell,infos_classe,aff_bord,'L',False)
+
+    # prénom élève
+    p.set_font('Arial','B',9)
+    p.cell(w_periode-w_infos_classe,h_cell,nom,aff_bord,2,'L')
+
+    # Infos persos élève (TODO)
+    p.set_font('Arial','',9)
+    infos_perso = "Né le 01/01/2005\nINE : 0123456789A"
+    p.multi_cell(w_periode-w_infos_classe,h_cell,infos_perso,aff_bord,'L')
+
+    # Absences + appréciation vie sco (TODO)
+    # TODO: Passer l'appréciation vie sco sur une plus petite police (8 comme appr dir)
+    p.set_xy(p.get_x(),p.get_y()-h_cell)
+    texte_viesco = "Absences : 3 demi-journées dont 1 non-réglée.\nAppréciation : Rien à signaler."
+    p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
+
+    ########################
+    #  Bloc appréciations  #
+    ########################
+
+    # Test fonction
+    for i in range(12):
+        ligne_appreciation(x_appr,y_appr,(matieres[i],'Mme. Professeure',lorem))
+        y_appr+=height_appr
+
+
+    ###################
+    #  Bloc moyennes  #
+    ###################
+
+    # Vu qu'on a un template fixe, on va se contenter d'appeler des fonctions bien définies
+    temp_dict = {
+        'FRANCAIS': moyenne_matiere,
+        'LVA ANGLAIS': moyenne_matiere,
+        'LVB ESPAGNOL': moyenne_matiere
+    }
+    ligne_eval(x_bloc,y_bloc,temp_dict)
+    temp_dict = {
+        'HIST.-GEOGRAPHIE': moyenne_matiere,
+        'ENS. MORAL & CIV.': moyenne_matiere,
+        'SC. ECO. & SOCIALES': moyenne_matiere
+    }
+    ligne_eval(x_bloc,y_bloc + 7*h_cell + h_offset_blocs, temp_dict)
+    temp_dict = {
+        'MATHEMATIQUES': moyenne_matiere,
+        'PHYSIQUE-CHIMIE': moyenne_matiere,
+        'SC. VIE & TERRE': moyenne_matiere
+    }
+    ligne_eval(x_bloc,y_bloc + 2*(7*h_cell + h_offset_blocs), temp_dict)
+    temp_dict = {
+        'ED. PHY. & SPORTIVE': moyenne_matiere,
+        'SC. NUM. & TECHNO.': moyenne_matiere,
+        'OPTION': moyenne_matiere
+    }
+    ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
+
+    legende(x_bloc,y_bloc + 4*(7*h_cell + h_offset_blocs))
+
+    #############################
+    #  Appr. générale/mentions  #
+    #############################
+
+    # Appréciation de la direction/PP
+    p.set_font('Arial','B',8)
+    p.set_xy(x_appr_dir,y_appr_dir)
+    p.cell(w_prof,h_cell,'Appréciation globale :',aff_bord,0)
+    p.set_font('Arial','',8)
+    p.multi_cell(0,h_cell,lorem,aff_bord,'L')
+
+    # Mention
+    # TODO: Question à poser: "mention:" apparaît toujours même si pas de mention ?
+    p.set_font('Arial','B',8)
+    p.set_xy(x_appr_dir,y_appr_dir+4*h_cell)
+    p.cell(w_prof/2,h_cell,'Mention :',aff_bord,0)
+    p.set_font('Arial','',8)
+    p.cell(0,h_cell,'Félicitations du conseil de classe',aff_bord,0) # TODO var
+
+    ####################
+    #  Signature chef  #
+    ####################
+    # Mention "le chef d'établissement" + signature
+    p.set_xy(x_chef,y_chef)
+    p.cell(w_prof,h_cell,"Le chef d'établissement",aff_bord,0)
+    #p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
+
+
+
+
+    ### Création du fichier
+    p.output('bulletin/%s.pdf'%nom, 'F')
+
+p = init_bulletin()
+make_bulletin(p)
