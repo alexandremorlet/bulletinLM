@@ -37,7 +37,7 @@ def make_bulletin():
 
     # Titres en gras: bulletin de période, vie scolaire
     p.set_font('Arial','B',9)
-    p.cell(w_periode,h_cell,periode,aff_bord,0,'C')
+    p.cell(w_periode,h_cell,"Bulletin du "+periode.lower(),aff_bord,0,'C')
     p.cell(0,h_cell,"Vie scolaire",aff_bord,0,'C')
 
     # ligne horizontale
@@ -363,13 +363,16 @@ with open("temp.json","r") as fichier_resultats:
 ##################################
 #  Variables de chaque bulletin  #
 ##################################
-periode = "Bulletin du 1er trimestre"
+# Année scolaire à indiquer (manuel)
 annee_sco = '2020-2021'
-
+# Choix de la période: Trimestre 1, Trimestre 2, Trimestre 3
+periode = "Trimestre 1"
 
 # TODO: Boucle sur les classes
 # for classe in resultats:
 classe = 'Classe test'
+
+# Identification du PP de la classe
 for prof in resultats[classe]['profs']:
     if resultats[classe]['profs'][prof]['pp']:
         prof_principal = resultats[classe]['profs'][prof]['nom']
@@ -385,7 +388,17 @@ for k in resultats['Classe test']:
     if match is not None:
         eleves.append(match.group())
 
+
+# Génération du bulletin pour chaque élève
 for eleve in eleves:
+    ## Infos personnelles
+    # Nom et prénom de l'élève
     nom = resultats['Classe test'][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
-    print(nom)
+
+    # TODO: INE, date de naissance
+
+    ## TODO: Vie scolaire
+
+    ## Appréciations matières
+
     make_bulletin()
