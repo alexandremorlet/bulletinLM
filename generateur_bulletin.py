@@ -1,6 +1,9 @@
 from fpdf import FPDF
 import json
 import re
+from collections import defaultdict
+
+nested_dict = lambda: defaultdict(nested_dict)
 
 # Todo: Verso du bulletin = Adresse des parents pour glisser le bulletin dans une enveloppe à fenêtre.
 
@@ -77,10 +80,15 @@ def make_bulletin():
     #  Bloc appréciations  #
     ########################
 
-    # Test fonction
-    for i in range(12):
-        ligne_appreciation(x_appr,y_appr+i*height_appr,(matieres[i],'Mme. Professeure',lorem))
+    # NOTE: On veut faire apparaître les appréciations dans un ordre précis
+    # hardcodé ici
+    ordre_matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
 
+    i=0
+    for matiere in ordre_matieres:
+        if matiere in moyennes:
+            ligne_appreciation(x_appr,y_appr+i*height_appr,(matiere,moyennes[matiere]['prof'],moyennes[matiere]['appreciation']))
+            i+=1
 
     ###################
     #  Bloc moyennes  #
@@ -350,7 +358,13 @@ vert_clair = (181,213,0)
 vert_fonce = (48,145,52)
 
 lorem = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'
-matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
+# Dictionnaire de matching entre l'intitulé long et l'intitulé court d'une matière
+matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB ESPAGNOL',
+            'Histoire-géographie': 'HIST.-GEOGRAPHIE','Enseignement moral et civique':'ENS. MORAL & CIV.',
+            'Sciences économiques et sociales':'SC. ECO. & SOCIALES', 'Mathématiques':'MATHEMATIQUES',
+            'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE',
+            'Education physique et sportive':'ED. PHY. & SPORT.',
+            'Sciences numériques et technologie':'SC. NUM. & TECHNO.', 'Sciences & laboratoire': 'OPTION'}
 moyenne_matiere = {"Restituer":2,"S'informer": 'Abs',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
 
 #############################
@@ -372,6 +386,13 @@ periode = "Trimestre 1"
 # for classe in resultats:
 classe = 'Classe test'
 
+matiere_prof = {}
+# Dico matiere <-> profs
+for id in resultats[classe]['profs']:
+    for matiere in resultats[classe]['profs'][id]['matiere']:
+        matiere_prof[matiere] = resultats[classe]['profs'][id]['nom']
+
+print(matiere_prof)
 # Identification du PP de la classe
 for prof in resultats[classe]['profs']:
     if resultats[classe]['profs'][prof]['pp']:
@@ -393,12 +414,35 @@ for k in resultats['Classe test']:
 for eleve in eleves:
     ## Infos personnelles
     # Nom et prénom de l'élève
-    nom = resultats['Classe test'][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
+    nom = resultats[classe][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
 
     # TODO: INE, date de naissance
 
     ## TODO: Vie scolaire
 
-    ## Appréciations matières
+    ### Appréciations matières
+
+    ## On liste les matières de l'élève avec l'ens et l'appr de la période
+    # NOTE: Inefficace, mais évite les problèmes de gestion d'options
+    # (tel élève n'a pas telle matière, elle ne doit donc pas apparaître)
+    moyennes = nested_dict()
+    # Dictionnaire de matching entre l'intitulé long et l'intitulé court d'une matière
+    # matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB ESPAGNOL', 'Histoire-géographie': 'HIST.-GEOGRAPHIE','Enseignement moral et civique':'ENS. MORAL & CIV.', 'Sciences économiques et sociales':'SC. ECO. & SOCIALES', 'Mathématiques':'MATHEMATIQUES', 'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE', 'Education physique et sportive':'ED. PHY. & SPORT.', 'Sciences numériques et technologie':'SC. NUM. & TECHNO.'}
+
+    for matiere in resultats[classe][eleve][periode]['moyennes']:
+        try:
+            moyennes[matieres[matiere]]['prof'] = matiere_prof[matiere]
+            moyennes[matieres[matiere]]['appreciation'] = resultats[classe][eleve][periode]['appreciations'][matiere]
+        except KeyError as e:
+            moyennes[matieres[matiere]]['prof'] = ''
+            moyennes[matieres[matiere]]['appreciation'] = ''
+            print("La matière %s n'a pas d'entrée dans le dico prof-matière"%matiere)
+            print("C'est parce qu'aucune appréciation n'a été rentrée !")
+            # TODO: Gestion des matières et des profs à revoir
+
+
+    print(moyennes)
+
+
 
     make_bulletin()
