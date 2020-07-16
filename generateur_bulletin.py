@@ -95,29 +95,25 @@ def make_bulletin():
     ###################
 
     # Vu qu'on a un template fixe, on va se contenter d'appeler des fonctions bien définies
-    temp_dict = {
-        'FRANCAIS': moyenne_matiere,
-        'LVA ANGLAIS': moyenne_matiere,
-        'LVB ESPAGNOL': moyenne_matiere
-    }
+    temp_dict = {ordre_matieres[i]:'' for i in range(0,3)}
+    for i in range(0,3):
+        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
+    # + prévoir (à des fins de dev) qu'il peut y avoir une matiere vide
     ligne_eval(x_bloc,y_bloc,temp_dict)
-    temp_dict = {
-        'HIST.-GEOGRAPHIE': moyenne_matiere,
-        'ENS. MORAL & CIV.': moyenne_matiere,
-        'SC. ECO. & SOCIALES': moyenne_matiere
-    }
+
+    temp_dict = {ordre_matieres[i]:'' for i in range(3,6)}
+    for i in range(3,6):
+        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
     ligne_eval(x_bloc,y_bloc + 7*h_cell + h_offset_blocs, temp_dict)
-    temp_dict = {
-        'MATHEMATIQUES': moyenne_matiere,
-        'PHYSIQUE-CHIMIE': moyenne_matiere,
-        'SC. VIE & TERRE': moyenne_matiere
-    }
+
+    temp_dict = {ordre_matieres[i]:'' for i in range(6,9)}
+    for i in range(6,9):
+        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
     ligne_eval(x_bloc,y_bloc + 2*(7*h_cell + h_offset_blocs), temp_dict)
-    temp_dict = {
-        'ED. PHY. & SPORTIVE': moyenne_matiere,
-        'SC. NUM. & TECHNO.': moyenne_matiere,
-        'OPTION': moyenne_matiere
-    }
+
+    temp_dict = {ordre_matieres[i]:'' for i in range(9,12)}
+    for i in range(9,12):
+        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
     ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
 
     legende(x_bloc,y_bloc + 4*(7*h_cell + h_offset_blocs))
@@ -188,7 +184,6 @@ def bloc_eval(x,y,matiere,moyennes):
     # matiere: str qui apparaîtra en haut du bloc
     # moyennes: dict format {'Restituer': 2.1;'Utiliser': 3}
     # donc thème -> moyenne (entre 1 et 4)
-
     x0=x ; y0 = y
     p.set_xy(x,y)
 
@@ -208,12 +203,13 @@ def bloc_eval(x,y,matiere,moyennes):
 
     # Cases avec les couleurs
     p.set_xy(x0+2*w_bloc/3,y0+h_cell)
-    aff_moyenne(moyennes['Restituer'])
-    aff_moyenne(moyennes["S'informer"])
-    aff_moyenne(moyennes['Communiquer'])
-    aff_moyenne(moyennes['Raisonner'])
-    aff_moyenne(moyennes["S'impliquer"])
-    aff_moyenne(moyennes['Utiliser'])
+    # On appelle aff_moyenne avec une valeur None par défaut si aucune évaluation
+    aff_moyenne(moyennes.get('Restituer',None))
+    aff_moyenne(moyennes.get("S'informer",None))
+    aff_moyenne(moyennes.get('Communiquer',None))
+    aff_moyenne(moyennes.get('Raisonner',None))
+    aff_moyenne(moyennes.get("S'impliquer",None))
+    aff_moyenne(moyennes.get('Utiliser',None))
 
     # Bordure autour du bloc
     p.rect(x0,y0,w_bloc,7*h_cell)
@@ -380,7 +376,7 @@ with open("temp.json","r") as fichier_resultats:
 # Année scolaire à indiquer (manuel)
 annee_sco = '2020-2021'
 # Choix de la période: Trimestre 1, Trimestre 2, Trimestre 3
-periode = "Trimestre 1"
+periode = "Trimestre 3"
 
 # TODO: Boucle sur les classes
 # for classe in resultats:
@@ -392,12 +388,10 @@ for id in resultats[classe]['profs']:
     for matiere in resultats[classe]['profs'][id]['matiere']:
         matiere_prof[matiere] = resultats[classe]['profs'][id]['nom']
 
-print(matiere_prof)
 # Identification du PP de la classe
 for prof in resultats[classe]['profs']:
     if resultats[classe]['profs'][prof]['pp']:
         prof_principal = resultats[classe]['profs'][prof]['nom']
-        print('pp ',prof_principal)
         break
 
 
@@ -420,7 +414,7 @@ for eleve in eleves:
 
     ## TODO: Vie scolaire
 
-    ### Appréciations matières
+    ### Appréciations par matière
 
     ## On liste les matières de l'élève avec l'ens et l'appr de la période
     # NOTE: Inefficace, mais évite les problèmes de gestion d'options
@@ -430,18 +424,19 @@ for eleve in eleves:
     # matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB ESPAGNOL', 'Histoire-géographie': 'HIST.-GEOGRAPHIE','Enseignement moral et civique':'ENS. MORAL & CIV.', 'Sciences économiques et sociales':'SC. ECO. & SOCIALES', 'Mathématiques':'MATHEMATIQUES', 'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE', 'Education physique et sportive':'ED. PHY. & SPORT.', 'Sciences numériques et technologie':'SC. NUM. & TECHNO.'}
 
     for matiere in resultats[classe][eleve][periode]['moyennes']:
+        m = matieres[matiere]
         try:
-            moyennes[matieres[matiere]]['prof'] = matiere_prof[matiere]
-            moyennes[matieres[matiere]]['appreciation'] = resultats[classe][eleve][periode]['appreciations'][matiere]
+            moyennes[m]['prof'] = matiere_prof[matiere]
+            moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'][matiere]
         except KeyError as e:
-            moyennes[matieres[matiere]]['prof'] = ''
-            moyennes[matieres[matiere]]['appreciation'] = ''
-            print("La matière %s n'a pas d'entrée dans le dico prof-matière"%matiere)
-            print("C'est parce qu'aucune appréciation n'a été rentrée !")
+            moyennes[m]['prof'] = ''
+            moyennes[m]['appreciation'] = ''
+            print("La matière %s n'a pas d'entrée dans le dico prof-matière, c'est parce qu'aucune appréciation n'a été rentrée !"%matiere)
             # TODO: Gestion des matières et des profs à revoir
 
+        #try:
+        moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
 
-    print(moyennes)
 
 
 
