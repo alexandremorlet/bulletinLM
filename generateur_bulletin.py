@@ -127,7 +127,7 @@ def make_bulletin():
     p.set_xy(x_appr_dir,y_appr_dir)
     p.cell(w_prof,h_cell,'Appréciation globale :',aff_bord,0)
     p.set_font('Arial','',8)
-    p.multi_cell(0,h_cell,lorem,aff_bord,'L')
+    p.multi_cell(0,h_cell,appr_dir,aff_bord,'L')
 
     # Mention
     # TODO: Question à poser: "mention:" apparaît toujours même si pas de mention ?
@@ -135,7 +135,7 @@ def make_bulletin():
     p.set_xy(x_appr_dir,y_appr_dir+4*h_cell)
     p.cell(w_prof/2,h_cell,'Mention :',aff_bord,0)
     p.set_font('Arial','',8)
-    p.cell(0,h_cell,'Félicitations du conseil de classe',aff_bord,0) # TODO var
+    p.cell(0,h_cell,mention,aff_bord,0)
 
     ####################
     #  Signature chef  #
@@ -414,14 +414,13 @@ for eleve in eleves:
 
     ## TODO: Vie scolaire
 
-    ### Appréciations par matière
+    ### Résultats de l'élève
 
     ## On liste les matières de l'élève avec l'ens et l'appr de la période
     # NOTE: Inefficace, mais évite les problèmes de gestion d'options
     # (tel élève n'a pas telle matière, elle ne doit donc pas apparaître)
     moyennes = nested_dict()
-    # Dictionnaire de matching entre l'intitulé long et l'intitulé court d'une matière
-    # matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB ESPAGNOL', 'Histoire-géographie': 'HIST.-GEOGRAPHIE','Enseignement moral et civique':'ENS. MORAL & CIV.', 'Sciences économiques et sociales':'SC. ECO. & SOCIALES', 'Mathématiques':'MATHEMATIQUES', 'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE', 'Education physique et sportive':'ED. PHY. & SPORT.', 'Sciences numériques et technologie':'SC. NUM. & TECHNO.'}
+    appr_dir = ''
 
     for matiere in resultats[classe][eleve][periode]['moyennes']:
         m = matieres[matiere]
@@ -434,10 +433,11 @@ for eleve in eleves:
             print("La matière %s n'a pas d'entrée dans le dico prof-matière, c'est parce qu'aucune appréciation n'a été rentrée !"%matiere)
             # TODO: Gestion des matières et des profs à revoir
 
-        #try:
+        # On prend les moyennes des différentes matières
         moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
 
-
+    # TODO appr_dir = resultats[classe][eleve][periode]['bilan']
+    mention = resultats[classe][eleve][periode]['mention']
 
 
     make_bulletin()
