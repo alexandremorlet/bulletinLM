@@ -436,7 +436,7 @@ for eleve in eleves:
         # On prend les moyennes des différentes matières
         moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
 
-    # TODO appr_dir = resultats[classe][eleve][periode]['bilan']
+    appr_dir = resultats[classe][eleve][periode]['bilan']
     mention = resultats[classe][eleve][periode]['mention']
 
 

@@ -259,6 +259,16 @@ for classe in resultats:
     for periode, appr, eleve, matiere in cursor:
         resultats[classe][eleve][periode]['appreciations'][matiere] = appr
 
+
+    ### Appréciation globale de l'élève
+    query = ("SELECT p.periode_nom, os.eleve_ou_classe_id, os.saisie_appreciation "
+             "FROM sacoche_officiel_saisie as os, sacoche_periode as p "
+             "WHERE rubrique_id = 0 AND saisie_type = 'eleve' AND prof_id NOT LIKE 0 "
+             "AND p.periode_id = os.periode_id")
+    cursor.execute(query)
+    for periode, eleve, appr in cursor:
+        resultats[classe][eleve][periode]['bilan'] = appr
+
     ### Mentions du conseil de classe (encouragements, félicitations, avertissement ...)
     # Une seule mention peut être rentrée dans l'interface (donc AT+AC = un élément).
     query = ("SELECT p.periode_nom, od.decision_contenu, ojd.user_id "
@@ -313,4 +323,4 @@ for classe, eleve, periode, abs, abs_non_reglees in cursor:
 
 
 with open('temp.json', 'w') as json_file:
-    json.dump(resultats, json_file)
+    json.dump(resultats, json_file, indent='\t')
