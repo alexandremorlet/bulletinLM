@@ -286,10 +286,8 @@ for classe in resultats:
 #   Absences   #
 ################
 # Dans sacoche_officiel_assiduite, on a le nb d'absences (1/2 journées ?)
-# et le nb d'abs non-justifiées. On va sauvegarder le nb d'absences sur la période
-# + le nb d'abs justifiées ("X 1/2 journées dont Y réglées adm.")
-# RQ: Absences exportées de Pronote. Sur le bulletin, c'est le nombre d'abs
-# réglées administrativement que l'on indique sur le bulletin (sinon voir doc Sacoche)
+# et le nb d'abs non-justifiées.
+# RQ: Absences exportées de Pronote (cf. doc. SACoche)
 
 query = ("SELECT g.groupe_nom, oa.user_id, p.periode_nom, oa.assiduite_absence, "
          "oa. assiduite_absence_nj "
@@ -300,10 +298,11 @@ query = ("SELECT g.groupe_nom, oa.user_id, p.periode_nom, oa.assiduite_absence, 
          "AND g.groupe_id = u.eleve_classe_id ")
 cursor.execute(query)
 for classe, eleve, periode, abs, abs_non_reglees in cursor:
-    #abs-abs_n_r pour avoir le nombre d'abs réglées administrativement
+    # Si on a des valeurs None (NULL), on passe
     if abs is None:
         continue
-    if abs_non_reglees is None: # Peut arriver si le bilan des absences est saisi à la main
+    # On peut avoir abs != None & abs_n_r = None (saisie manuelle)
+    if abs_non_reglees is None:
         abs_non_reglees = 0
     resultats[classe][eleve][periode]['absences'] = (abs,abs_non_reglees)
 

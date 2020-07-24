@@ -70,10 +70,17 @@ def make_bulletin():
     infos_perso = "Né le 01/01/2005\nINE : 0123456789A"
     p.multi_cell(w_periode-w_infos_classe,h_cell,infos_perso,aff_bord,'L')
 
-    # Absences + appréciation vie sco (TODO)
-    # TODO: Passer l'appréciation vie sco sur une plus petite police (8 comme appr dir)
+    # Absences + appréciation vie sco
+    # TODO: Appréciation vie scolaire
     p.set_xy(p.get_x(),p.get_y()-h_cell)
-    texte_viesco = "Absences : 3 demi-journées dont 1 non-réglée.\nAppréciation : Rien à signaler."
+    texte_viesco = "Absences : %s demi-journée"%abs
+    if int(abs) > 1:
+        texte_viesco += "s"
+    texte_viesco += " dont %s non-réglée"%abs_non_reglees
+    if int(abs_non_reglees) > 1:
+        texte_viesco += "s"
+    texte_viesco += ".\nAppréciation : %s"%appr_vie_sco
+    
     p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
 
     ########################
@@ -415,7 +422,10 @@ for classe in ('Classe test',):
 
         # TODO: INE, date de naissance
 
-        ## TODO: Vie scolaire
+        ## Vie scolaire
+        abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
+        appr_vie_sco = '' # TODO
+
 
         ### Résultats de l'élève
 
