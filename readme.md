@@ -10,10 +10,14 @@ Le format du bulletin est très rigide, l'équipe pédagogique ayant choisi d'é
 - MySQL 8
 
 ## Scripts
-- sacoche_db_parser.py: génère un fichier .json contenant toutes les informations nécessaires pour générer le bulletin.
-- generateur_bulletin.py: prend le fichier .json sorti par sacoche_db_parser.py pour générer le bulletin, selon les critères décidés au sein de notre équipe.
+- sacoche_db_parser.py: génère deux fichiers JSON (profs.json et classes.json) contenant les informations utiles à la création des bulletins.
+- generateur_bulletin.py: prend les fichiers JSON pour générer le bulletin, selon les critères décidés au sein de notre équipe.
 
 ## Générer les bulletins
 - Importer le dump SACoche dans une base MySQL 'sacochedb'.
 - Exécuter le script sacoche_db_parser.py (options de connexion MySQL en début de script).
 - Exécuter le script generateur_bulletin.py.
+
+## Notes d'utilisation
+- SACoche ne stocke pas directement le lien entre professeurs, matières et classes. C'est les appréciations qui sont utilisées pour savoir quel nom d'enseignant.e doit apparaître sur le bulletin de chaque élève. On reprend ici ce fonctionnement: un.e enseignant.e qui ne remplit pas ses appréciations n'aura pas son nom sur le bulletin.
+- TODO: Gestion des options, ajout de l'adresse des parents au dos (pour enveloppe à fenêtre).

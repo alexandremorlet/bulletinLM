@@ -52,15 +52,11 @@ for id, INE, nom, prenom, classe in cursor:
 ############################
 #   Equipes pédagogiques   #
 ############################
-# Il faut, pour chaque resultats[classe], indiquer le/la PP ainsi
-# que l'enseignant.e de chaque matière
+# On crée un dictionnaire de correspondances id_prof <=> nom_prof
+profs_matiere = {0: ''} # l'ID 0 sert de valeur par défaut
 
-# TODO: On fait la liste des profs, mais il faudrait les associer automatiquement
-# à leur matière MAIS jointure_user_matiere permet de faire le lien entre prof
-# et matiere, mais pas de savoir pour quelle classe (X est-il prof de PC, de SL,
-# ou d'ES avec la classe Y ?). jointure_user_groupe permet de faire le lien entre
-# prof et classe, mais ne précise pas la matière. On ne peut pas croiser les deux.
-# Solution temp: matière remplie à partir des appréciations
+# La (ou les) matière enseignée à chaque classe est déterminée
+# à partir des appréciations et stockée par élève (voir plus loin)
 
 query = ("SELECT u.user_nom, u.user_genre, g.groupe_nom, jug.jointure_pp, u.user_id "
          "FROM sacoche_jointure_user_groupe as jug, sacoche_user as u, "
@@ -77,15 +73,13 @@ for nom, genre, classe, pp, id in cursor:
     else:
         pass # Non renseigné/inconnu
 
-    # On ajoute l'enseignant à la classe
-    # Format: [M/Mme X, matière, PP (0/1)]
-    # On garde un espace vide pour la matière
-    # Solution temp: matière remplie à partir des appréciations
-    resultats[classe]['profs'][id]={'nom': nom, 'matiere': [], 'pp': bool(pp)}
+    # On ajoute l'enseignant à la "classe"
+    profs_matiere[id] = nom
 
-# with open('temp.json', 'w') as json_file:
-#     json.dump(resultats, json_file)
-# exit()
+    # Si PP, on l'indique dans la classe correspondance
+    if pp == 1:
+        resultats[classe]['PP'] = nom
+
 
 ###########################
 #   Notes et  moyennes   #
@@ -160,7 +154,7 @@ for classe in resultats:
     for eleve_id in resultats[classe]:
         # L'entrée du dico resultats[classe] concerne-t-elle un élève ?
         if isinstance(eleve_id, str): # dans resultats[classe], type(key) est int pour eleve_id,
-                                      # et str pour tout le reste (prof, PP, appréciations, ...)
+                                      # et str pour tout le reste (appréciations, ...)
             continue
 
         query = ("SELECT rt.theme_nom, m.matiere_nom, s.saisie_note, "
@@ -202,8 +196,7 @@ for classe in resultats:
 #############################
 #  Appréciations (classes)  #
 #############################
-# On collecte toutes les appréciations, triées par periode
-# On associe également chaque prof à sa matière (ou ses matières)
+# On collecte toutes les appréciations générales des classes, triées par periode
 
 # Attention: la table officiel_saisie contient des ID de groupe et de classe dans
 # la même colonne, il faut être vigilant
@@ -213,30 +206,24 @@ for classe in resultats:
 
 for classe in resultats:
     query = ("SELECT p.periode_nom, os.saisie_appreciation, "
-             "m.matiere_nom, os.prof_id "
+             "m.matiere_nom "
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
              "sacoche_matiere as m, sacoche_periode as p "
-             "WHERE p.periode_id = os.periode_id AND os.saisie_type = 'classe' AND os.eleve_ou_classe_id = g.groupe_id "
+             "WHERE p.periode_id = os.periode_id AND os.saisie_type = 'classe' "
+             "AND os.eleve_ou_classe_id = g.groupe_id "
              "AND g.groupe_nom = '%s' "
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
     cursor.execute(query)
-    for periode, appr, matiere, prof_id in cursor:
+    for periode, appr, matiere in cursor:
         resultats[classe]['appreciations'][periode][matiere] = appr
-
-        # On en profite pour remplir la matière de chaque prof sauf cas particuliers
-        # d'abord c'est peut-être déjà écrit (très probable)
-        if matiere in resultats[classe]['profs'][prof_id]['matiere']:
-            continue
-        # ensuite deux cas: soit ce prof n'a qu'1 matière (cas simple)
-        # soit il en a plusieurs (PC+ES(+SL)), HG+EMC(+DGEMC)), donc il faut initier une liste
-        else:
-            resultats[classe]['profs'][prof_id]['matiere'].append(matiere)
 
 
 ##############################
 #   Appréciations (élèves)   #
 ##############################
 # On collecte toutes les appréciations, triées par periode
+# Les appréciations servent également à associer un prof à chaque matière de l'élève
+
 # Attention: la table officiel_saisie contient des ID de groupe et de classe dans
 # la même colonne, il faut être vigilant
 
@@ -245,7 +232,7 @@ for classe in resultats:
 
 for classe in resultats:
     query = ("SELECT p.periode_nom, os.saisie_appreciation, os.eleve_ou_classe_id, "
-             "m.matiere_nom  "
+             "m.matiere_nom, os.prof_id  "
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
              "sacoche_matiere as m, sacoche_periode as p, sacoche_user as u "
              "WHERE p.periode_id = os.periode_id " # pour p.periode_nom
@@ -256,8 +243,9 @@ for classe in resultats:
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe) # nom matière
     cursor.execute(query)
 
-    for periode, appr, eleve, matiere in cursor:
+    for periode, appr, eleve, matiere, prof in cursor:
         resultats[classe][eleve][periode]['appreciations'][matiere] = appr
+        resultats[classe][eleve]['profs'][matiere] = prof # HYP: 1 prof par matière !
 
 
     ### Appréciation globale de l'élève
@@ -322,5 +310,9 @@ for classe, eleve, periode, abs, abs_non_reglees in cursor:
 
 
 
-with open('temp.json', 'w') as json_file:
+with open('classes.json', 'w') as json_file:
     json.dump(resultats, json_file, indent='\t')
+
+
+with open('profs.json', 'w') as json_file:
+    json.dump(profs_matiere, json_file, indent='\t')

@@ -1,6 +1,6 @@
 from fpdf import FPDF
 import json
-import re
+import re, os
 from collections import defaultdict
 
 nested_dict = lambda: defaultdict(nested_dict)
@@ -149,7 +149,11 @@ def make_bulletin():
 
 
     ### Création du fichier
-    p.output('bulletin/%s.pdf'%nom, 'F')
+    try:
+        p.output('bulletin/%s.pdf'%nom, 'F')
+    except FileNotFoundError as e:
+        os.mkdir("bulletin")
+        p.output('bulletin/%s.pdf'%nom, 'F')
 
 ## Bloc appréciation
 def ligne_appreciation(x,y,appr):
@@ -364,11 +368,13 @@ matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB E
 moyenne_matiere = {"Restituer":2,"S'informer": 'Abs',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
 
 #############################
-#  Lecture du fichier JSON  #
+#  Lecture des fichiers JSON  #
 #############################
-with open("temp.json","r") as fichier_resultats:
+with open("classes.json","r") as fichier_resultats:
     resultats = json.load(fichier_resultats)
 
+with open("profs.json","r") as fichier_profs:
+    profs_nom = json.load(fichier_profs)
 
 ##################################
 #  Variables de chaque bulletin  #
@@ -379,65 +385,64 @@ annee_sco = '2020-2021'
 periode = "Trimestre 3"
 
 # TODO: Boucle sur les classes
-# for classe in resultats:
-classe = 'Classe test'
+for classe in ('Classe test',):
 
-matiere_prof = {}
-# Dico matiere <-> profs
-for id in resultats[classe]['profs']:
-    for matiere in resultats[classe]['profs'][id]['matiere']:
-        matiere_prof[matiere] = resultats[classe]['profs'][id]['nom']
+    # # TODO: Enlever ?
+    # matiere_prof = {}
+    # # Dico matiere <-> profs
+    # for id in resultats[classe]['profs']:
+    #     for matiere in resultats[classe]['profs'][id]['matiere']:
+    #         matiere_prof[matiere] = resultats[classe]['profs'][id]['nom']
 
-# Identification du PP de la classe
-for prof in resultats[classe]['profs']:
-    if resultats[classe]['profs'][prof]['pp']:
-        prof_principal = resultats[classe]['profs'][prof]['nom']
-        break
+    # Identification du PP de la classe
+    prof_principal = resultats[classe]['PP']
 
 
-# Dans chaque entrée resultats[classe], les élèves sont repérés par leur id
-# les autres infos ont des str en key
-eleves = []
-for k in resultats['Classe test']:
-    match = re.search('^[0-9]+',k)
-    if match is not None:
-        eleves.append(match.group())
+    # Dans chaque entrée resultats[classe], les élèves sont repérés par leur id
+    # les autres infos ont des str en key
+    eleves = []
+    for k in resultats['Classe test']:
+        match = re.search('^[0-9]+',k)
+        if match is not None:
+            eleves.append(match.group())
 
 
-# Génération du bulletin pour chaque élève
-for eleve in eleves:
-    ## Infos personnelles
-    # Nom et prénom de l'élève
-    nom = resultats[classe][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
+    # Génération du bulletin pour chaque élève
+    for eleve in eleves:
+        ## Infos personnelles
+        # Nom et prénom de l'élève
+        nom = resultats[classe][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
 
-    # TODO: INE, date de naissance
+        # TODO: INE, date de naissance
 
-    ## TODO: Vie scolaire
+        ## TODO: Vie scolaire
 
-    ### Résultats de l'élève
+        ### Résultats de l'élève
 
-    ## On liste les matières de l'élève avec l'ens et l'appr de la période
-    # NOTE: Inefficace, mais évite les problèmes de gestion d'options
-    # (tel élève n'a pas telle matière, elle ne doit donc pas apparaître)
-    moyennes = nested_dict()
-    appr_dir = ''
+        ## On utilise l'entrée [classe][eleve][profs] pour associer les profs aux matières
+        # Rappel: cette correspondance est construite à partir des appréciations. Pas d'appréciation
+        # veut dire que le nom du ou de la prof n'apparaîtra pas !
+        moyennes = nested_dict()
+        appr_dir = ''
 
-    for matiere in resultats[classe][eleve][periode]['moyennes']:
-        m = matieres[matiere]
-        try:
-            moyennes[m]['prof'] = matiere_prof[matiere]
-            moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'][matiere]
-        except KeyError as e:
-            moyennes[m]['prof'] = ''
-            moyennes[m]['appreciation'] = ''
-            print("La matière %s n'a pas d'entrée dans le dico prof-matière, c'est parce qu'aucune appréciation n'a été rentrée !"%matiere)
-            # TODO: Gestion des matières et des profs à revoir
+        for matiere in resultats[classe][eleve][periode]['moyennes']:
+            # matiere = nom long, m = nom court (tel qu'il apparaît sur le bulletin)
+            m = matieres[matiere]
 
-        # On prend les moyennes des différentes matières
-        moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
+            # Si pas d'appr, on ne trouvera pas d'id de prof ici
+            # str car json sort tout (key+values) en str
+            prof_id = str(resultats[classe][eleve]['profs'].get(matiere,0))
 
-    appr_dir = resultats[classe][eleve][periode]['bilan']
-    mention = resultats[classe][eleve][periode]['mention']
+            moyennes[m]['prof'] = profs_nom[prof_id] # l'ID 0 retournera ''
+            # On récupère l'appréciation (si elle existe)
+            moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'].get(matiere,'')
 
 
-    make_bulletin()
+            # On prend les moyennes des différentes matières
+            moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
+
+        appr_dir = resultats[classe][eleve][periode]['bilan']
+        mention = resultats[classe][eleve][periode]['mention']
+
+
+        make_bulletin()
