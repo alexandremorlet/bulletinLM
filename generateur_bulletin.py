@@ -80,7 +80,7 @@ def make_bulletin():
     if int(abs_non_reglees) > 1:
         texte_viesco += "s"
     texte_viesco += ".\nAppréciation : %s"%appr_vie_sco
-    
+
     p.multi_cell(0,h_cell,texte_viesco,aff_bord,'L')
 
     ########################
@@ -349,7 +349,7 @@ offset_appr_dir = 0.4
 x_appr_dir, y_appr_dir = marge+marge+w_appreciation, height-marge-8*h_cell-offset_appr_dir
 # Signature chef d'etbl
 signature = 'fleur.png' # path de la signature
-h_signature = 2*h_cell # largeur de la signature
+h_signature = 2*h_cell # hauteur de l'image signature
 x_chef = width-marge-2*w_prof # position du texte "chef"
 y_chef = height-marge-2*h_cell-offset_appr_dir
 
@@ -364,7 +364,6 @@ orange = (250,145,56)
 vert_clair = (181,213,0)
 vert_fonce = (48,145,52)
 
-lorem = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,'
 # Dictionnaire de matching entre l'intitulé long et l'intitulé court d'une matière
 matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB ESPAGNOL',
             'Histoire-géographie': 'HIST.-GEOGRAPHIE','Enseignement moral et civique':'ENS. MORAL & CIV.',
@@ -372,7 +371,7 @@ matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB E
             'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE',
             'Education physique et sportive':'ED. PHY. & SPORT.',
             'Sciences numériques et technologie':'SC. NUM. & TECHNO.', 'Sciences & laboratoire': 'OPTION'}
-moyenne_matiere = {"Restituer":2,"S'informer": 'Abs',"Communiquer": None, "Raisonner":3.1, "S'impliquer":3.5, "Utiliser":0}
+
 
 #############################
 #  Lecture des fichiers JSON  #
@@ -391,15 +390,8 @@ annee_sco = '2020-2021'
 # Choix de la période: Trimestre 1, Trimestre 2, Trimestre 3
 periode = "Trimestre 3"
 
-# TODO: Boucle sur les classes
+# Boucle sur les classes
 for classe in ('Classe test',):
-
-    # # TODO: Enlever ?
-    # matiere_prof = {}
-    # # Dico matiere <-> profs
-    # for id in resultats[classe]['profs']:
-    #     for matiere in resultats[classe]['profs'][id]['matiere']:
-    #         matiere_prof[matiere] = resultats[classe]['profs'][id]['nom']
 
     # Identification du PP de la classe
     prof_principal = resultats[classe]['PP']
@@ -451,8 +443,8 @@ for classe in ('Classe test',):
             # On prend les moyennes des différentes matières
             moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
 
-        appr_dir = resultats[classe][eleve][periode]['bilan']
-        mention = resultats[classe][eleve][periode]['mention']
+        appr_dir = resultats[classe][eleve][periode].get('bilan','')
+        mention = resultats[classe][eleve][periode].get('mention','')
 
 
         make_bulletin()
