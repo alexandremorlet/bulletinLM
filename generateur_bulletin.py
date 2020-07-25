@@ -88,13 +88,20 @@ def make_bulletin():
     ########################
 
     # NOTE: On veut faire apparaître les appréciations dans un ordre précis
-    # hardcodé ici
-    ordre_matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.', 'OPTION']
+    # hardcodé dans ordre_matieres
 
+    # Matières du tronc commun
     i=0
     for matiere in ordre_matieres:
-        if matiere in moyennes:
-            ligne_appreciation(x_appr,y_appr+i*height_appr,(matiere,moyennes[matiere]['prof'],moyennes[matiere]['appreciation']))
+        infos_appr = (matiere,moyennes[matiere].get('prof',''),moyennes[matiere].get('appreciation',''))
+        ligne_appreciation(x_appr,y_appr+i*height_appr,infos_appr)
+        i+=1
+
+    # On vérifie s'il n'y a pas d'option à ajouter
+    for m in moyennes:
+        if m not in ordre_matieres:
+            infos_appr = (m,moyennes[m].get('prof',''),moyennes[m].get('appreciation',''))
+            ligne_appreciation(x_appr,y_appr+i*height_appr,infos_appr)
             i+=1
 
     ###################
@@ -102,27 +109,37 @@ def make_bulletin():
     ###################
 
     # Vu qu'on a un template fixe, on va se contenter d'appeler des fonctions bien définies
-    temp_dict = {ordre_matieres[i]:'' for i in range(0,3)}
-    for i in range(0,3):
-        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
-    # + prévoir (à des fins de dev) qu'il peut y avoir une matiere vide
+    # On construit des lignes de 3 blocs, dans l'ordre souhaité des matières.
+
+    # Ligne FR/EN/ES
+    temp_dict = {ordre_matieres[i]:moyennes[ordre_matieres[i]]['moyennes'] for i in range(0,3)}
     ligne_eval(x_bloc,y_bloc,temp_dict)
 
-    temp_dict = {ordre_matieres[i]:'' for i in range(3,6)}
-    for i in range(3,6):
-        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
+    # Ligne HG/EMC/SES
+    temp_dict = {ordre_matieres[i]:moyennes[ordre_matieres[i]]['moyennes'] for i in range(3,6)}
     ligne_eval(x_bloc,y_bloc + 7*h_cell + h_offset_blocs, temp_dict)
 
-    temp_dict = {ordre_matieres[i]:'' for i in range(6,9)}
-    for i in range(6,9):
-        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
+    # Ligne Maths/PC/SVT
+    temp_dict = {ordre_matieres[i]:moyennes[ordre_matieres[i]]['moyennes'] for i in range(6,9)}
     ligne_eval(x_bloc,y_bloc + 2*(7*h_cell + h_offset_blocs), temp_dict)
 
-    temp_dict = {ordre_matieres[i]:'' for i in range(9,12)}
-    for i in range(9,12):
-        temp_dict[ordre_matieres[i]] = moyennes[ordre_matieres[i]]['moyennes']
-    ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict)
+    # Selon la maquette, 2 situations:
+    # - Soit on a deux blocs sur la dernière ligne (EPS et SNT)
+    # - Soit on a trois blocs sur la dernière ligne (EPS, SNT, option)
+    temp_dict = {ordre_matieres[i]:moyennes[ordre_matieres[i]]['moyennes'] for i in range(9,11)}
+    # On cherche l'option
+    skip = 1 # Par défaut, pas d'option donc 1 bloc masqué
+    for m in moyennes:
+        if m in ordre_matieres:
+            pass
+        else: # Si on trouve une option, on l'ajoute à temp_dict ...
+            temp_dict[m] = moyennes[m]['moyennes']
+            skip = 0 # ... et on ne saute pas le dernier bloc
 
+    ligne_eval(x_bloc,y_bloc + 3*(7*h_cell + h_offset_blocs), temp_dict, skip=skip)
+
+
+    # Légende des couleurs sous les blocs
     legende(x_bloc,y_bloc + 4*(7*h_cell + h_offset_blocs))
 
     #############################
@@ -225,23 +242,27 @@ def bloc_eval(x,y,matiere,moyennes):
     # Bordure autour du bloc
     p.rect(x0,y0,w_bloc,7*h_cell)
 
-def ligne_eval(x,y,dict):
+def ligne_eval(x,y,dict,skip=0):
     # Construit une ligne avec 3 blocs éval
     # x,y: coordonnées du coin supérieur gauche du premier bloc
     # dict: dico format d[matiere]={'theme1'=moyenne, 'theme2'=moyenne, ...}
+    # skip: int qui retire n blocs à partir de la fin
     # Hyp: les matieres sont dans l'ordre souhaitées par le template
     # RQ: Python 3.7+: ordre préservé dans les dictionnaires
 
-    matieres = list(dict)
-    bloc_eval(x,y,matieres[0],dict[matieres[0]])
+    # On récupère les noms des matières à partir des clés
+    # (list(dict) renvoit la liste des keys)
+    m = list(dict)
+    bloc_eval(x,y,m[0],dict[m[0]])
 
     # Coordonnées pour le bloc 2
     x2 = x+w_bloc+w_offset_blocs
-    bloc_eval(x2,y,matieres[1],dict[matieres[1]])
+    bloc_eval(x2,y,m[1],dict[m[1]])
 
     # Coordonnées pour le bloc 3
-    x3 = x2+w_bloc+w_offset_blocs
-    bloc_eval(x3,y,matieres[2],dict[matieres[2]])
+    if skip == 0: # Si skip != 0, le dernier bloc n'est pas affiché
+        x3 = x2+w_bloc+w_offset_blocs
+        bloc_eval(x3,y,m[2],dict[m[2]])
 
 def aff_moyenne(moyenne):
     # Crée et remplit l'objet (cell ou rect+fill) pour afficher la moyenne d'un thème
@@ -364,13 +385,16 @@ orange = (250,145,56)
 vert_clair = (181,213,0)
 vert_fonce = (48,145,52)
 
+# Ordre d'apparition des matières pour les appréciations (et les moyennes)
+ordre_matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.']
 # Dictionnaire de matching entre l'intitulé long et l'intitulé court d'une matière
 matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB ESPAGNOL',
             'Histoire-géographie': 'HIST.-GEOGRAPHIE','Enseignement moral et civique':'ENS. MORAL & CIV.',
             'Sciences économiques et sociales':'SC. ECO. & SOCIALES', 'Mathématiques':'MATHEMATIQUES',
             'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE',
             'Education physique et sportive':'ED. PHY. & SPORT.',
-            'Sciences numériques et technologie':'SC. NUM. & TECHNO.', 'Sciences & laboratoire': 'OPTION'}
+            'Sciences numériques et technologie':'SC. NUM. & TECHNO.', 'Sciences & laboratoire': 'OPTION SC. & LABO.',
+            'Danse sportive': 'OPTION SPORT', 'Volley Ball': 'OPTION SPORT' }
 
 
 #############################
