@@ -53,8 +53,6 @@ def make_bulletin():
     # Infos de la classe
     p.set_font('Arial','',9)
     p.set_xy(x0,y0) # on commence au début de la ligne
-    # infos_classe = "Année scolaire 2020-2021\nClasse: Classe test\nPP: Mme Professeure"
-    # p.multi_cell(w_infos_classe,h_cell,infos_classe,aff_bord,'L',False)
     p.cell(w_infos_classe,h_cell,'Année scolaire: %s'%annee_sco,aff_bord,2,'L')
     p.cell(w_infos_classe,h_cell,'Classe: %s'%classe,aff_bord,2,'L')
     p.cell(w_infos_classe,h_cell,'PP: %s'%prof_principal,aff_bord,2,'L')
@@ -423,7 +421,7 @@ for classe in ('Classe test',):
     # Dans chaque entrée resultats[classe], les élèves sont repérés par leur id
     # les autres infos ont des str en key
     eleves = []
-    for k in resultats['Classe test']:
+    for k in resultats[classe]:
         match = re.search('^[0-9]+',k)
         if match is not None:
             eleves.append(match.group())
@@ -433,7 +431,7 @@ for classe in ('Classe test',):
     for eleve in eleves:
         ## Infos personnelles
         # Nom et prénom de l'élève
-        nom = resultats[classe][eleve]['nom'] + ' ' + resultats['Classe test'][eleve]['prenom']
+        nom = resultats[classe][eleve]['nom'] + ' ' + resultats[classe][eleve]['prenom']
 
         # TODO: INE, date de naissance
 
