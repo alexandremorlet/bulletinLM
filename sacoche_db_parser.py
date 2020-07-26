@@ -161,10 +161,11 @@ for classe in resultats:
                 "s.saisie_date, ri.item_coef " # on prend aussi la date pour les moyennes trimestrielles
                 "FROM sacoche_saisie AS s, sacoche_referentiel_item AS ri, "
                 "sacoche_referentiel_theme as rt, sacoche_referentiel_domaine as rd, "
-                "sacoche_matiere as m "
+                "sacoche_matiere as m, sacoche_devoir as d "
                 "WHERE s.eleve_id=%d " # filtre par élève
                 "AND ri.item_id = s.item_id AND rt.theme_id = ri.theme_id " # filtre par thème (ts items d'un thème)
-                "AND rd.domaine_id = rt.domaine_id AND m.matiere_id = rd.matiere_id "%eleve_id) # nom matiere
+                "AND rd.domaine_id = rt.domaine_id AND m.matiere_id = rd.matiere_id " # nom matiere
+                "AND d.devoir_id = s.devoir_id AND d.devoir_diagnostic = 0 "%eleve_id) # On exclut les évaluations diagnostiques
 
         cursor.execute(query)
 
