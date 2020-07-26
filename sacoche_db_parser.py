@@ -1,11 +1,7 @@
 """
 Ce script génère, à partir de la BDD Sacoche, un fichier .JSON contenant
 toutes les informations nécessaires pour éditer le bulletin des élèves
-Tables utilisées: [A COMPLETER]
-TODO: Bug sur la matière des profs ?
-      On peut supprimer la boucle sur la classe dans la plupart des cas ? (cf absences)
-      Gestion des cas particuliers (que des absences, que des NE, NN, ...)
-        Faire apparaître ABS, NE, NN ou une croix si on a un mélange de cas
+TODO: On peut supprimer la boucle sur la classe dans la plupart des cas ? (cf absences)
 """
 import json
 import os
@@ -121,6 +117,15 @@ def periode_note(periodes, date):
 
     return periode
 
+def switch_notes_text(note, notes):
+    # Switch/case fonction pour comptabiliser les AB, NN, NE et DI
+    # notes = list d'entiers selon [AB,NN,NE,DI]
+
+    d={'AB':0,'NN':1,'NE':2,'DI':3}
+
+    notes[d[note]] += 1
+
+    return notes
 
 ### Fonction calc_moyenne
 # on attend de recevoir le dictionnaire resultat_eleve[matière][theme]
@@ -131,18 +136,43 @@ def calc_moyenne(notes, periode, matiere, theme):
 
     somme = 0
     nb_notes = 0
+    moyenne = None
+    notes_text = [0,0,0,0] # Valeurs textuelles plutôt que notes (nb de AB, NN, NE, DI)
     for note, coef in notes[matiere][theme][periode]:
-        if note.isdigit(): # Ne comptent dans la moyenne que les nombres 1-4
-                           # et pas les AB, NE, NN, ...
+        if note.isdigit(): # Note = int entre 1 et 4
             somme += int(note)*int(coef)
             nb_notes += int(coef)
+        else: # On peut avoir AB, NN, NE, DI
+            notes_text = switch_notes_text(note, notes_text)
 
-            # Une fois toutes les notes lues, on peut calculer la moyenne
+    # Une fois toutes les notes lues, on peut calculer la moyenne
     try:
         moyenne = somme/nb_notes
-    except ZeroDivisionError as err:
-        moyenne = None
-    return moyenne
+        return moyenne
+
+    except ZeroDivisionError as err: # Pas de valeur numérique à calculer
+                                     # donc la moyenne est AB, NE, NN ou DI.
+
+        somme = sum(notes_text) # On somme le nombre de AB+NE+NN+DI
+
+        # 1er cas: En fait il y a juste aucune note
+        if somme == 0:
+            return None
+
+        # 2ème cas: que des AB/NE/NN/DI
+        if notes_text[0] == somme:
+            return 'Abs.'
+        elif notes_text[1] == somme:
+            return 'NN'
+        elif notes_text[2] == somme:
+            return 'NE'
+        elif notes_text[3] == somme:
+            return 'Disp.'
+
+        # 3ème cas: On a un mélange de différentes choses, on marque NN
+        return 'NN'
+
+    return
 
 ### Enregistrement des évaluations pour chaque élève
 for classe in resultats:

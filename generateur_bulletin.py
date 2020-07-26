@@ -167,7 +167,7 @@ def make_bulletin():
     # Mention "le chef d'établissement" + signature
     p.set_xy(x_chef,y_chef)
     p.cell(w_prof,h_cell,"Le chef d'établissement",aff_bord,0)
-    #p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
+    p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
 
 
 
@@ -286,8 +286,7 @@ def aff_moyenne(moyenne):
         return
 
     # Enfin: Si on a bien un nombre, prendre la couleur qui va bien
-    # Todo: passer ces seuils en variables globales
-    # Pour l'instant: on prend un seuil tous les 0.75 (largeur intervalle/nb couleurs)
+    # On prend un seuil tous les 0.75 (largeur intervalle/nb couleurs)
 
     if moyenne < 1.75: # Mauvais = rouge
         r,g,b = rouge
