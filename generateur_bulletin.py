@@ -55,7 +55,17 @@ def make_bulletin():
     p.set_xy(x0,y0) # on commence au début de la ligne
     p.cell(w_infos_classe,h_cell,'Année scolaire: %s'%annee_sco,aff_bord,2,'L')
     p.cell(w_infos_classe,h_cell,'Classe: %s'%classe,aff_bord,2,'L')
-    p.cell(w_infos_classe,h_cell,'PP: %s'%prof_principal,aff_bord,2,'L')
+
+    # PP: on peut en avoir plusieurs. Tri des noms et affichage correct.
+    if len(prof_principal) == 1:
+        PP = prof_principal[0]
+    else:
+        prof_principal.sort(key=lambda x: x.split(" ")[-1]) # on trie par nom sans considérer M/Mme
+        PP = ''
+        for i in range(len(prof_principal)):
+            PP += prof_principal[i]
+            PP += '\n       '
+    p.multi_cell(w_infos_classe,h_cell,'PP: %s'%PP,aff_bord,'L')
 
     p.set_xy(x0+w_infos_classe,y0)
 
@@ -417,7 +427,7 @@ periode = "Trimestre 1"
 # Boucle sur les classes
 for classe in ('2GT 2',):
 
-    # Identification du PP de la classe
+    # Identification du/des PP de la classe
     prof_principal = resultats[classe]['PP']
 
 

@@ -56,6 +56,10 @@ for id, INE, nom, prenom, classe, d_n, genre in cursor:
 # On crée un dictionnaire de correspondances id_prof <=> nom_prof
 profs_matiere = {0: ''} # l'ID 0 sert de valeur par défaut
 
+# On init la liste des PP pour chaque classe
+for c in resultats:
+    resultats[c]['PP']=[]
+
 # La (ou les) matière enseignée à chaque classe est déterminée
 # à partir des appréciations et stockée par élève (voir plus loin)
 
@@ -80,7 +84,8 @@ for nom, genre, classe, pp, id in cursor:
 
     # Si PP, on l'indique dans la classe correspondance
     if pp == 1:
-        resultats[classe]['PP'] = nom
+        resultats[classe]['PP'].append(nom)
+
 
 
 ###########################
