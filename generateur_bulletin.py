@@ -409,10 +409,10 @@ with open("profs.json","r") as fichier_profs:
 # Année scolaire à indiquer (manuel)
 annee_sco = '2020-2021'
 # Choix de la période: Trimestre 1, Trimestre 2, Trimestre 3
-periode = "Trimestre 3"
+periode = "Trimestre 1"
 
 # Boucle sur les classes
-for classe in ('Classe test',):
+for classe in ('2GT 2',):
 
     # Identification du PP de la classe
     prof_principal = resultats[classe]['PP']

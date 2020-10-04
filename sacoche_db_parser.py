@@ -37,7 +37,8 @@ resultats = nested_dict()
 
 query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom "
         "FROM sacoche_user AS u, sacoche_groupe AS g "
-        "WHERE u.user_profil_sigle = 'ELV' AND g.groupe_id = u.eleve_classe_id")
+        "WHERE u.user_profil_sigle = 'ELV' AND g.groupe_id = u.eleve_classe_id "
+        "AND u.user_sortie_date > NOW()")
 cursor.execute(query)
 for id, INE, nom, prenom, classe in cursor:
     resultats[classe][id]['INE'] = INE
@@ -58,7 +59,8 @@ query = ("SELECT u.user_nom, u.user_genre, g.groupe_nom, jug.jointure_pp, u.user
          "FROM sacoche_jointure_user_groupe as jug, sacoche_user as u, "
          "sacoche_groupe as g "
          "WHERE u.user_profil_sigle = 'ENS' AND jug.user_id = u.user_id "
-         "AND g.groupe_id = jug.groupe_id AND g.groupe_type = 'classe'")
+         "AND g.groupe_id = jug.groupe_id AND g.groupe_type = 'classe' "
+         "AND u.user_sortie_date > NOW()")
 cursor.execute(query)
 for nom, genre, classe, pp, id in cursor:
     # Gestion du genre de l'enseignant
@@ -160,7 +162,7 @@ def calc_moyenne(notes, periode, matiere, theme):
             return None
 
         # 2ème cas: que des AB/NE/NN/DI
-        if notes_text[0] == somme:
+        elif notes_text[0] == somme:
             return 'Abs.'
         elif notes_text[1] == somme:
             return 'NN'
@@ -267,6 +269,7 @@ for classe in resultats:
              "FROM sacoche_officiel_saisie as os, sacoche_groupe as g, "
              "sacoche_matiere as m, sacoche_periode as p, sacoche_user as u "
              "WHERE p.periode_id = os.periode_id " # pour p.periode_nom
+             "AND u.user_sortie_date > NOW() "
              "AND os.saisie_type = 'eleve' " # appréciations des élèves, pas des classes
              "AND u.user_id = os.eleve_ou_classe_id " # lignes suivantes: trouver la classe (groupe_nom)
              "AND g.groupe_id = u.eleve_classe_id "
@@ -283,7 +286,7 @@ for classe in resultats:
     query = ("SELECT p.periode_nom, os.eleve_ou_classe_id, os.saisie_appreciation "
              "FROM sacoche_officiel_saisie as os, sacoche_periode as p "
              "WHERE rubrique_id = 0 AND saisie_type = 'eleve' AND prof_id NOT LIKE 0 "
-             "AND p.periode_id = os.periode_id")
+             "AND p.periode_id = os.periode_id ")
     cursor.execute(query)
     for periode, eleve, appr in cursor:
         resultats[classe][eleve][periode]['bilan'] = appr
@@ -326,7 +329,8 @@ query = ("SELECT g.groupe_nom, oa.user_id, p.periode_nom, oa.assiduite_absence, 
          "sacoche_periode as p, sacoche_user as u "
          "WHERE p.periode_id = oa.periode_id " # pour p.periode_nom
          "AND u.user_id = oa.user_id " # lignes suivantes: trouver la classe (groupe_nom)
-         "AND g.groupe_id = u.eleve_classe_id ")
+         "AND g.groupe_id = u.eleve_classe_id "
+         "AND u.user_sortie_date > NOW()")
 cursor.execute(query)
 for classe, eleve, periode, abs, abs_non_reglees in cursor:
     # Si on a des valeurs None (NULL), on passe
