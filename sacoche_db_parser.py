@@ -35,16 +35,20 @@ nested_dict = lambda: defaultdict(nested_dict)
 # On commence donc par remplir les infos personnelles des élèves, regroupés par classes
 resultats = nested_dict()
 
-query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom "
+query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom, u.user_naissance_date, u.user_genre "
         "FROM sacoche_user AS u, sacoche_groupe AS g "
         "WHERE u.user_profil_sigle = 'ELV' AND g.groupe_id = u.eleve_classe_id "
         "AND u.user_sortie_date > NOW()")
 cursor.execute(query)
-for id, INE, nom, prenom, classe in cursor:
+for id, INE, nom, prenom, classe, d_n, genre in cursor:
     resultats[classe][id]['INE'] = INE
     resultats[classe][id]['nom'] = nom
     resultats[classe][id]['prenom'] = prenom
-
+    resultats[classe][id]['genre'] = genre
+    if d_n is not None:
+        resultats[classe][id]['naissance'] = str(d_n.day)+'/'+str(d_n.month)+'/'+str(d_n.year)
+    else:
+        resultats[classe][id]['naissance'] = ''
 
 ############################
 #   Equipes pédagogiques   #

@@ -65,7 +65,10 @@ def make_bulletin():
 
     # Infos persos élève (TODO)
     p.set_font('Arial','',9)
-    infos_perso = "Né le 01/01/2005\nINE : 0123456789A"
+    if genre == 'M' or genre == 'I':
+        infos_perso = "Né le %s\nINE : %s"%(date_naissance,INE)
+    if genre == 'F':
+        infos_perso = "Née le %s\nINE : %s"%(date_naissance,INE)
     p.multi_cell(w_periode-w_infos_classe,h_cell,infos_perso,aff_bord,'L')
 
     # Absences + appréciation vie sco
@@ -432,8 +435,9 @@ for classe in ('2GT 2',):
         ## Infos personnelles
         # Nom et prénom de l'élève
         nom = resultats[classe][eleve]['nom'] + ' ' + resultats[classe][eleve]['prenom']
-
-        # TODO: INE, date de naissance
+        INE = resultats[classe][eleve]['INE']
+        date_naissance = resultats[classe][eleve]['naissance']
+        genre = resultats[classe][eleve]['genre']
 
         ## Vie scolaire
         abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
