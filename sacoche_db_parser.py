@@ -265,7 +265,7 @@ for classe in resultats:
              "AND m.matiere_id = os.rubrique_id AND os.prof_id NOT LIKE 0"%classe)
     cursor.execute(query)
     for periode, appr, matiere in cursor:
-        resultats[classe]['appreciations'][periode][matiere] = appr
+        resultats[classe]['appreciations'][periode][matiere] = appr.replace(u"\2019","'")
 
 
 ##############################
@@ -295,7 +295,7 @@ for classe in resultats:
     cursor.execute(query)
 
     for periode, appr, eleve, matiere, prof in cursor:
-        resultats[classe][eleve][periode]['appreciations'][matiere] = appr
+        resultats[classe][eleve][periode]['appreciations'][matiere] = appr.replace("\u2019","'")
         resultats[classe][eleve]['profs'][matiere] = prof # HYP: 1 prof par matière !
 
 
