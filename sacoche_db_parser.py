@@ -33,6 +33,7 @@ nested_dict = lambda: defaultdict(nested_dict)
 # Les élèves sont regroupés par classes
 # On utilise l'ID des élèves mais pas des classes (homonymes possibles que dans un cas)
 # On commence donc par remplir les infos personnelles des élèves, regroupés par classes
+# WARNING: Si l'élève n'est pas associé à un parent, on aura une erreur au moment de générer le bulletin
 resultats = nested_dict()
 
 query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom, u.user_naissance_date, u.user_genre, jpe.parent_id "

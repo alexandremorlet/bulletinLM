@@ -16,7 +16,6 @@ def make_bulletin():
     p = FPDF('L','cm','A4')
     p.set_margins(marge,marge,marge) # marges (pas de marge_bottom, mais ligne suivante aide)
     p.set_auto_page_break(False) # empêcher les page break automatiques (donc ~ pas de marge en bas)
-
     p.add_page()
 
     #################################
@@ -460,54 +459,50 @@ for classe in ('2GT 2',):
         # Nom et prénom de l'élève
         # TODO: Temp bugfix à corriger - un élève pose souci dans la base,
         # on le skip et on continue avec les autres
-        try:
-            nom = resultats[classe][eleve]['nom'] + ' ' + resultats[classe][eleve]['prenom']
-            INE = resultats[classe][eleve]['INE']
-            date_naissance = resultats[classe][eleve]['naissance']
-            genre = resultats[classe][eleve]['genre']
 
-            ## Vie scolaire
-            abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
-            appr_vie_sco = '' # TODO
+        nom = resultats[classe][eleve]['nom'] + ' ' + resultats[classe][eleve]['prenom']
+        INE = resultats[classe][eleve]['INE']
+        date_naissance = resultats[classe][eleve]['naissance']
+        genre = resultats[classe][eleve]['genre']
 
-
-            ### Résultats de l'élève
-
-            ## On utilise l'entrée [classe][eleve][profs] pour associer les profs aux matières
-            # Rappel: cette correspondance est construite à partir des appréciations. Pas d'appréciation
-            # veut dire que le nom du ou de la prof n'apparaîtra pas !
-            moyennes = nested_dict()
-            appr_dir = ''
-
-            for matiere in resultats[classe][eleve][periode]['moyennes']:
-                # matiere = nom long, m = nom court (tel qu'il apparaît sur le bulletin)
-                m = matieres[matiere]
-
-                # Si pas d'appr, on ne trouvera pas d'id de prof ici
-                # str car json sort tout (key+values) en str
-                prof_id = str(resultats[classe][eleve]['profs'].get(matiere,0))
-
-                moyennes[m]['prof'] = profs_nom[prof_id] # l'ID 0 retournera ''
-                # On récupère l'appréciation (si elle existe)
-                moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'].get(matiere,'')
+        ## Vie scolaire
+        abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
+        appr_vie_sco = '' # TODO
 
 
-                # On prend les moyennes des différentes matières
-                moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
+        ### Résultats de l'élève
 
-            appr_dir = resultats[classe][eleve][periode].get('bilan','')
-            mention = resultats[classe][eleve][periode].get('mention','')
+        ## On utilise l'entrée [classe][eleve][profs] pour associer les profs aux matières
+        # Rappel: cette correspondance est construite à partir des appréciations. Pas d'appréciation
+        # veut dire que le nom du ou de la prof n'apparaîtra pas !
+        moyennes = nested_dict()
+        appr_dir = ''
 
-            parents = [str(p) for p in resultats[classe][eleve]['parents']] # besoin de str pour les dict keys
+        for matiere in resultats[classe][eleve][periode]['moyennes']:
+            # matiere = nom long, m = nom court (tel qu'il apparaît sur le bulletin)
+            m = matieres[matiere]
 
-            for parent in parents:
-                # Un bulletin par responsable légal
-                numero_bulletin = parents_coord[parent]['num']
-                parent_nom = parents_coord[parent]['nom']
-                parent_adresse = parents_coord[parent]['adresse']
+            # Si pas d'appr, on ne trouvera pas d'id de prof ici
+            # str car json sort tout (key+values) en str
+            prof_id = str(resultats[classe][eleve]['profs'].get(matiere,0))
 
-                make_bulletin()
+            moyennes[m]['prof'] = profs_nom[prof_id] # l'ID 0 retournera ''
+            # On récupère l'appréciation (si elle existe)
+            moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'].get(matiere,'')
 
-        except KeyError as e:
-            print("Problème avec l'élève ID ", eleve)
-            print(e)
+
+            # On prend les moyennes des différentes matières
+            moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
+
+        appr_dir = resultats[classe][eleve][periode].get('bilan','')
+        mention = resultats[classe][eleve][periode].get('mention','')
+
+        parents = [str(p) for p in resultats[classe][eleve]['parents']] # besoin de str pour les dict keys
+
+        for parent in parents:
+            # Un bulletin par responsable légal
+            numero_bulletin = parents_coord[parent]['num']
+            parent_nom = parents_coord[parent]['nom']
+            parent_adresse = parents_coord[parent]['adresse']
+
+            make_bulletin()
