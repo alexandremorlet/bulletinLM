@@ -35,12 +35,13 @@ nested_dict = lambda: defaultdict(nested_dict)
 # On commence donc par remplir les infos personnelles des élèves, regroupés par classes
 resultats = nested_dict()
 
-query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom, u.user_naissance_date, u.user_genre "
-        "FROM sacoche_user AS u, sacoche_groupe AS g "
+query = ("SELECT u.user_id, u.user_reference, u.user_nom, u.user_prenom, g.groupe_nom, u.user_naissance_date, u.user_genre, jpe.parent_id "
+        "FROM sacoche_user AS u, sacoche_groupe AS g, sacoche_jointure_parent_eleve as jpe "
         "WHERE u.user_profil_sigle = 'ELV' AND g.groupe_id = u.eleve_classe_id "
-        "AND u.user_sortie_date > NOW()")
+        "AND u.user_sortie_date > NOW() "
+        "AND jpe.eleve_id = u.user_id")
 cursor.execute(query)
-for id, INE, nom, prenom, classe, d_n, genre in cursor:
+for id, INE, nom, prenom, classe, d_n, genre, id_parent in cursor:
     resultats[classe][id]['INE'] = INE
     resultats[classe][id]['nom'] = nom
     resultats[classe][id]['prenom'] = prenom
@@ -49,6 +50,11 @@ for id, INE, nom, prenom, classe, d_n, genre in cursor:
         resultats[classe][id]['naissance'] = str(d_n.day)+'/'+str(d_n.month)+'/'+str(d_n.year)
     else:
         resultats[classe][id]['naissance'] = ''
+
+    try:
+        resultats[classe][id]['parents'].append(id_parent)
+    except AttributeError as e:
+        resultats[classe][id]['parents'] = [id_parent]
 
 ############################
 #   Equipes pédagogiques   #
@@ -354,6 +360,38 @@ for classe, eleve, periode, abs, abs_non_reglees in cursor:
 
 
 
+#######################
+#   Fichier parents   #
+#######################
+# On fait un fichier dans lequel on ira chercher les coordonnées des parents
+# à faire apparaître sur le bulletin pour l'envoi aux familles
+parents = nested_dict()
+
+query = ("SELECT u.user_id, u.user_nom, u.user_prenom, pa.adresse_ligne1, pa.adresse_ligne2, "
+        "pa.adresse_ligne3, pa.adresse_ligne4, pa.adresse_postal_code, pa.adresse_postal_libelle, "
+        "pa.adresse_pays_nom "
+        "FROM sacoche_user as u, sacoche_parent_adresse as pa "
+        "WHERE pa.parent_id = u.user_id")
+cursor.execute(query)
+
+for id, nom, prenom, al1, al2, al3, al4, CP, ville, pays in cursor:
+    parents[id]['nom'] = nom + ' ' + prenom
+
+    # Adresse multiligne dans 1 variable
+    al = [al1, al2, al3, al4]
+    adresse = ''
+    for ligne in al:
+        if ligne is '':
+            pass
+        else:
+            adresse += ligne
+            adresse += '\n'
+
+    adresse = adresse + CP + ' ' + ville
+    if pays != "FRANCE":
+        adresse = adresse + '\n' + pays
+
+    parents[id]['adresse'] = adresse
 
 with open('classes.json', 'w') as json_file:
     json.dump(resultats, json_file, indent='\t')
@@ -361,3 +399,6 @@ with open('classes.json', 'w') as json_file:
 
 with open('profs.json', 'w') as json_file:
     json.dump(profs_matiere, json_file, indent='\t')
+
+with open('parents.json', 'w') as json_file:
+    json.dump(parents, json_file, indent='\t')
