@@ -132,7 +132,7 @@ def switch_notes_text(note, notes):
     # Switch/case fonction pour comptabiliser les AB, NN, NE et DI
     # notes = list d'entiers selon [AB,NN,NE,DI]
 
-    d={'AB':0,'NN':1,'NE':2,'DI':3}
+    d={'AB':0,'NN':1,'NE':2,'DI':3, 'NF':4}
 
     notes[d[note]] += 1
 
@@ -148,7 +148,7 @@ def calc_moyenne(notes, periode, matiere, theme):
     somme = 0
     nb_notes = 0
     moyenne = None
-    notes_text = [0,0,0,0] # Valeurs textuelles plutôt que notes (nb de AB, NN, NE, DI)
+    notes_text = [0,0,0,0,0] # Valeurs textuelles plutôt que notes (nb de AB, NN, NE, DI)
     for note, coef in notes[matiere][theme][periode]:
         if note.isdigit(): # Note = int entre 1 et 4
             somme += int(note)*int(coef)
@@ -179,6 +179,8 @@ def calc_moyenne(notes, periode, matiere, theme):
             return 'NE'
         elif notes_text[3] == somme:
             return 'Disp.'
+        elif notes_text[4] == somme:
+            return 'NF'
 
         # 3ème cas: On a un mélange de différentes choses, on marque NN
         return 'NN'

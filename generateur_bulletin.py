@@ -333,25 +333,25 @@ def legende(x,y):
     p.set_fill_color(r,g,b)
     p.rect(x,y,h_cell,h_cell,'F')
     p.set_xy(x+h_cell,y)
-    p.cell(w,h_cell,'Très insuffisant',aff_bord)
+    p.cell(w,h_cell,'Maîtrise insuffisante',aff_bord)
 
     r,g,b = orange
     p.set_fill_color(r,g,b)
     p.rect(x+o,y,h_cell,h_cell,'F')
     p.set_xy(x+w+2*h_cell,y)
-    p.cell(w,h_cell,'Insuffisamment maîtrisé',aff_bord)
+    p.cell(w,h_cell,'Maîtrise partielle',aff_bord)
 
     r,g,b = vert_clair
     p.set_fill_color(r,g,b)
     p.rect(x+2*o,y,h_cell,h_cell,'F')
     p.set_xy(x+2*o+h_cell,y)
-    p.cell(w,h_cell,'Satisfaisant',aff_bord)
+    p.cell(w,h_cell,'Maîtrise correcte',aff_bord)
 
     r,g,b = vert_fonce
     p.set_fill_color(r,g,b)
     p.rect(x+3*o,y,h_cell,h_cell,'F')
     p.set_xy(x+3*o+h_cell,y)
-    p.cell(w,h_cell,'Très satisfaisant',aff_bord)
+    p.cell(w,h_cell,'Bonne maîtrise',aff_bord)
 
 ################################
 #  Init et variables globales  #
@@ -404,7 +404,7 @@ matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB E
             'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE',
             'Education physique et sportive':'ED. PHY. & SPORT.',
             'Sciences numériques et technologie':'SC. NUM. & TECHNO.', 'Sciences & laboratoire': 'OPTION SC. & LABO.',
-            'Danse sportive': 'OPTION SPORT', 'Volley Ball': 'OPTION SPORT' }
+            'Educ physique et sportive de complément': 'OPTION SPORT' }
 
 
 #############################
