@@ -5,8 +5,6 @@ from collections import defaultdict
 
 nested_dict = lambda: defaultdict(nested_dict)
 
-# Todo: Verso du bulletin = Adresse des parents pour glisser le bulletin dans une enveloppe à fenêtre.
-
 ###############
 #  Fonctions  #
 ###############
@@ -181,14 +179,23 @@ def make_bulletin():
     p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
 
 
-
+    #####################
+    # Adresse du parent #
+    #####################
+    p.add_page(orientation='P', format="A4")
+    p.set_xy(x_parent, y_parent)
+    p.set_font('Arial','B',12)
+    p.cell(0, h_cell*1.25, parent_nom, aff_bord,2)
+    p.set_font('Arial','',12)
+    p.multi_cell(0, h_cell*1.25, parent_adresse, aff_bord, 'L')
 
     ### Création du fichier
+    fname = nom+'_'+str(numero_bulletin)
     try:
-        p.output('bulletin/%s.pdf'%nom, 'F')
+        p.output('bulletin/%s.pdf'%fname, 'F')
     except FileNotFoundError as e:
         os.mkdir("bulletin")
-        p.output('bulletin/%s.pdf'%nom, 'F')
+        p.output('bulletin/%s.pdf'%fname, 'F')
 
 ## Bloc appréciation
 def ligne_appreciation(x,y,appr):
@@ -395,6 +402,10 @@ orange = (250,145,56)
 vert_clair = (181,213,0)
 vert_fonce = (48,145,52)
 
+# Adresse du parent au dos du bulletin (page en portait)
+x_parent = 11
+y_parent = 5
+
 # Ordre d'apparition des matières pour les appréciations (et les moyennes)
 ordre_matieres = ['FRANCAIS', 'LVA ANGLAIS', 'LVB ESPAGNOL', 'HIST.-GEOGRAPHIE','ENS. MORAL & CIV.', 'SC. ECO. & SOCIALES', 'MATHEMATIQUES', 'PHYSIQUE-CHIMIE','SC. VIE & TERRE', 'ED. PHY. & SPORT.', 'SC. NUM. & TECHNO.']
 # Dictionnaire de matching entre l'intitulé long et l'intitulé court d'une matière
@@ -415,6 +426,9 @@ with open("classes.json","r") as fichier_resultats:
 
 with open("profs.json","r") as fichier_profs:
     profs_nom = json.load(fichier_profs)
+
+with open("parents.json","r") as fichier_parents:
+    parents_coord = json.load(fichier_parents)
 
 ##################################
 #  Variables de chaque bulletin  #
@@ -444,42 +458,56 @@ for classe in ('2GT 2',):
     for eleve in eleves:
         ## Infos personnelles
         # Nom et prénom de l'élève
-        nom = resultats[classe][eleve]['nom'] + ' ' + resultats[classe][eleve]['prenom']
-        INE = resultats[classe][eleve]['INE']
-        date_naissance = resultats[classe][eleve]['naissance']
-        genre = resultats[classe][eleve]['genre']
+        # TODO: Temp bugfix à corriger - un élève pose souci dans la base,
+        # on le skip et on continue avec les autres
+        try:
+            nom = resultats[classe][eleve]['nom'] + ' ' + resultats[classe][eleve]['prenom']
+            INE = resultats[classe][eleve]['INE']
+            date_naissance = resultats[classe][eleve]['naissance']
+            genre = resultats[classe][eleve]['genre']
 
-        ## Vie scolaire
-        abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
-        appr_vie_sco = '' # TODO
-
-
-        ### Résultats de l'élève
-
-        ## On utilise l'entrée [classe][eleve][profs] pour associer les profs aux matières
-        # Rappel: cette correspondance est construite à partir des appréciations. Pas d'appréciation
-        # veut dire que le nom du ou de la prof n'apparaîtra pas !
-        moyennes = nested_dict()
-        appr_dir = ''
-
-        for matiere in resultats[classe][eleve][periode]['moyennes']:
-            # matiere = nom long, m = nom court (tel qu'il apparaît sur le bulletin)
-            m = matieres[matiere]
-
-            # Si pas d'appr, on ne trouvera pas d'id de prof ici
-            # str car json sort tout (key+values) en str
-            prof_id = str(resultats[classe][eleve]['profs'].get(matiere,0))
-
-            moyennes[m]['prof'] = profs_nom[prof_id] # l'ID 0 retournera ''
-            # On récupère l'appréciation (si elle existe)
-            moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'].get(matiere,'')
+            ## Vie scolaire
+            abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
+            appr_vie_sco = '' # TODO
 
 
-            # On prend les moyennes des différentes matières
-            moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
+            ### Résultats de l'élève
 
-        appr_dir = resultats[classe][eleve][periode].get('bilan','')
-        mention = resultats[classe][eleve][periode].get('mention','')
+            ## On utilise l'entrée [classe][eleve][profs] pour associer les profs aux matières
+            # Rappel: cette correspondance est construite à partir des appréciations. Pas d'appréciation
+            # veut dire que le nom du ou de la prof n'apparaîtra pas !
+            moyennes = nested_dict()
+            appr_dir = ''
+
+            for matiere in resultats[classe][eleve][periode]['moyennes']:
+                # matiere = nom long, m = nom court (tel qu'il apparaît sur le bulletin)
+                m = matieres[matiere]
+
+                # Si pas d'appr, on ne trouvera pas d'id de prof ici
+                # str car json sort tout (key+values) en str
+                prof_id = str(resultats[classe][eleve]['profs'].get(matiere,0))
+
+                moyennes[m]['prof'] = profs_nom[prof_id] # l'ID 0 retournera ''
+                # On récupère l'appréciation (si elle existe)
+                moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'].get(matiere,'')
 
 
-        make_bulletin()
+                # On prend les moyennes des différentes matières
+                moyennes[m]['moyennes'] = resultats[classe][eleve][periode]['moyennes'][matiere]
+
+            appr_dir = resultats[classe][eleve][periode].get('bilan','')
+            mention = resultats[classe][eleve][periode].get('mention','')
+
+            parents = [str(p) for p in resultats[classe][eleve]['parents']] # besoin de str pour les dict keys
+
+            for parent in parents:
+                # Un bulletin par responsable légal
+                numero_bulletin = parents_coord[parent]['num']
+                parent_nom = parents_coord[parent]['nom']
+                parent_adresse = parents_coord[parent]['adresse']
+
+                make_bulletin()
+
+        except KeyError as e:
+            print("Problème avec l'élève ID ", eleve)
+            print(e)
