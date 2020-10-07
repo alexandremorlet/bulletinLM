@@ -369,13 +369,14 @@ parents = nested_dict()
 
 query = ("SELECT u.user_id, u.user_nom, u.user_prenom, pa.adresse_ligne1, pa.adresse_ligne2, "
         "pa.adresse_ligne3, pa.adresse_ligne4, pa.adresse_postal_code, pa.adresse_postal_libelle, "
-        "pa.adresse_pays_nom "
-        "FROM sacoche_user as u, sacoche_parent_adresse as pa "
-        "WHERE pa.parent_id = u.user_id")
+        "pa.adresse_pays_nom, jpe.resp_legal_num "
+        "FROM sacoche_user as u, sacoche_parent_adresse as pa, sacoche_jointure_parent_eleve as jpe "
+        "WHERE pa.parent_id = u.user_id AND jpe.parent_id = u.user_id")
 cursor.execute(query)
 
-for id, nom, prenom, al1, al2, al3, al4, CP, ville, pays in cursor:
+for id, nom, prenom, al1, al2, al3, al4, CP, ville, pays, num in cursor:
     parents[id]['nom'] = nom + ' ' + prenom
+    parents[id]['num'] = num
 
     # Adresse multiligne dans 1 variable
     al = [al1, al2, al3, al4]
