@@ -107,6 +107,8 @@ def make_bulletin():
 
     # On vérifie s'il n'y a pas d'option à ajouter
     for m in moyennes:
+        if m == "Vie scolaire":
+            continue # L'appréciation vie sco n'apparaît pas ici
         if m not in ordre_matieres:
             infos_appr = (m,moyennes[m].get('prof',''),moyennes[m].get('appreciation',''))
             ligne_appreciation(x_appr,y_appr+i*height_appr,infos_appr)
@@ -138,9 +140,10 @@ def make_bulletin():
     # On cherche l'option
     skip = 1 # Par défaut, pas d'option donc 1 bloc masqué
     for m in moyennes:
-        if m in ordre_matieres:
-            pass
-        else: # Si on trouve une option, on l'ajoute à temp_dict ...
+        if m == 'Vie scolaire': # on ignore la moyenne de vie sco (mais elle existe pour pouvoir mettre une appr à l'élève)
+            continue
+        if m not in ordre_matieres: # Si on trouve une option (qui n'est pas dans l'ordre de base)
+                                    # On l'ajoute à temp_dict pour que les moyennes sortent
             temp_dict[m] = moyennes[m]['moyennes']
             skip = 0 # ... et on ne saute pas le dernier bloc
 
@@ -175,7 +178,7 @@ def make_bulletin():
     # Mention "le chef d'établissement" + signature
     p.set_xy(x_chef,y_chef)
     p.cell(w_prof,h_cell,"Le chef d'établissement",aff_bord,0)
-    p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
+    #p.image(signature,p.get_x(),p.get_y()-0.5*h_cell, h=h_signature)
 
 
     #####################
@@ -414,7 +417,7 @@ matieres = {'Français':'FRANCAIS', 'Anglais': 'LVA ANGLAIS', 'Espagnol': 'LVB E
             'Physique-chimie':'PHYSIQUE-CHIMIE','Sciences de la vie et de la terre':'SC. VIE & TERRE',
             'Education physique et sportive':'ED. PHY. & SPORT.',
             'Sciences numériques et technologie':'SC. NUM. & TECHNO.', 'Sciences & laboratoire': 'OPTION SC. & LABO.',
-            'Educ physique et sportive de complément': 'OPTION SPORT' }
+            'Educ physique et sportive de complément': 'OPTION SPORT', 'Vie scolaire': 'Vie scolaire' }
 
 
 #############################
@@ -467,7 +470,7 @@ for classe in ('2GT 2',):
 
         ## Vie scolaire
         abs,abs_non_reglees = resultats[classe][eleve][periode].get('absences',(0,0))
-        appr_vie_sco = '' # TODO
+        appr_vie_sco = resultats[classe][eleve][periode]['appreciations'].get('Vie scolaire','')
 
 
         ### Résultats de l'élève

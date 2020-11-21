@@ -136,10 +136,10 @@ def periode_note(periodes, date):
     return periode
 
 def switch_notes_text(note, notes):
-    # Switch/case fonction pour comptabiliser les AB, NN, NE et DI
+    # Switch/case fonction pour comptabiliser les AB, NN, NE et DI (+ NF et NR)
     # notes = list d'entiers selon [AB,NN,NE,DI]
 
-    d={'AB':0,'NN':1,'NE':2,'DI':3, 'NF':4}
+    d={'AB':0,'NN':1,'NE':2,'DI':3, 'NF':4, 'NR':5}
 
     notes[d[note]] += 1
 
@@ -155,7 +155,7 @@ def calc_moyenne(notes, periode, matiere, theme):
     somme = 0
     nb_notes = 0
     moyenne = None
-    notes_text = [0,0,0,0,0] # Valeurs textuelles plutôt que notes (nb de AB, NN, NE, DI)
+    notes_text = [0,0,0,0,0,0] # Valeurs textuelles plutôt que notes (nb de AB, NN, NE, DI)
     for note, coef in notes[matiere][theme][periode]:
         if note.isdigit(): # Note = int entre 1 et 4
             somme += int(note)*int(coef)
@@ -169,7 +169,7 @@ def calc_moyenne(notes, periode, matiere, theme):
         return moyenne
 
     except ZeroDivisionError as err: # Pas de valeur numérique à calculer
-                                     # donc la moyenne est AB, NE, NN ou DI.
+
 
         somme = sum(notes_text) # On somme le nombre de AB+NE+NN+DI
 
@@ -177,7 +177,7 @@ def calc_moyenne(notes, periode, matiere, theme):
         if somme == 0:
             return None
 
-        # 2ème cas: que des AB/NE/NN/DI
+        # 2ème cas: que des AB/NE/NN/DI/NF/NR
         elif notes_text[0] == somme:
             return 'Abs.'
         elif notes_text[1] == somme:
@@ -188,6 +188,8 @@ def calc_moyenne(notes, periode, matiere, theme):
             return 'Disp.'
         elif notes_text[4] == somme:
             return 'NF'
+        elif notes_text[5] == somme:
+            return 'NR'
 
         # 3ème cas: On a un mélange de différentes choses, on marque NN
         return 'NN'
@@ -296,7 +298,8 @@ for classe in resultats:
     cursor.execute(query)
 
     for periode, appr, eleve, matiere, prof in cursor:
-        resultats[classe][eleve][periode]['appreciations'][matiere] = appr.replace("\u2019","'")
+        # TODO: UTF-8 https://alexanderankin.github.io/pyfpdf/mkdocs_docs/Unicode/index.html
+        resultats[classe][eleve][periode]['appreciations'][matiere] = appr.replace("\u2019","'").replace('\u2026',"...")
         resultats[classe][eleve]['profs'][matiere] = prof # HYP: 1 prof par matière !
 
 
@@ -383,7 +386,7 @@ for id, nom, prenom, al1, al2, al3, al4, CP, ville, pays, num in cursor:
     al = [al1, al2, al3, al4]
     adresse = ''
     for ligne in al:
-        if ligne is '':
+        if ligne == '':
             pass
         else:
             adresse += ligne
