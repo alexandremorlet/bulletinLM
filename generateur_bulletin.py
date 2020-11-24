@@ -220,7 +220,7 @@ def ligne_appreciation(x,y,appr):
     p.cell(w_prof,h_cell,appr[1])
 
     # Affichage appréciation
-    p.set_font('Arial','',7.5)
+    p.set_font('Arial','',7)
     p.set_xy(x0+w_prof,y0+offset_appr)
     p.multi_cell(w_appreciation-w_prof,h_cell,appr[2], align='L')
 
@@ -489,7 +489,7 @@ for classe in ('2GT 2',):
             # str car json sort tout (key+values) en str
             prof_id = str(resultats[classe][eleve]['profs'].get(matiere,0))
 
-            moyennes[m]['prof'] = profs_nom[prof_id] # l'ID 0 retournera ''
+            moyennes[m]['prof'] = profs_nom.get(prof_id,0) # l'ID 0 retournera ''
             # On récupère l'appréciation (si elle existe)
             moyennes[m]['appreciation'] = resultats[classe][eleve][periode]['appreciations'].get(matiere,'')
 
