@@ -500,6 +500,10 @@ for classe in ('2GT 2',):
         appr_dir = resultats[classe][eleve][periode].get('bilan','')
         mention = resultats[classe][eleve][periode].get('mention','')
 
+        # Attention ! Les avertissements n'apparaissent pas sur le bulletin.
+        if "Avertissement" in mention:
+            mention = ""
+
         parents = [str(p) for p in resultats[classe][eleve]['parents']] # besoin de str pour les dict keys
 
         for parent in parents:
