@@ -308,13 +308,13 @@ def aff_moyenne(moyenne):
     # Enfin: Si on a bien un nombre, prendre la couleur qui va bien
     # On prend un seuil tous les 0.75 (largeur intervalle/nb couleurs)
 
-    if moyenne < 1.75: # Mauvais = rouge
+    if moyenne <= 1.75: # Mauvais = rouge
         r,g,b = rouge
-    if moyenne >= 1.75 and moyenne < 2.5: # moyen: orange
+    if moyenne > 1.75 and moyenne <= 2.5: # moyen: orange
         r,g,b = orange
-    if moyenne >= 2.5 and moyenne < 3.25: # bien: vert
+    if moyenne > 2.5 and moyenne <= 3.25: # bien: vert
         r,g,b = vert_clair
-    if moyenne >= 3.25: # très bien: vert foncé
+    if moyenne > 3.25: # très bien: vert foncé
         r,g,b = vert_fonce
 
     # Centre du rectangle: (w_bloc/6,h_cell/2)
@@ -438,7 +438,7 @@ with open("parents.json","r") as fichier_parents:
 # Année scolaire à indiquer (manuel)
 annee_sco = '2020-2021'
 # Choix de la période: Trimestre 1, Trimestre 2, Trimestre 3
-periode = "Trimestre 1"
+periode = "Trimestre 2"
 
 # Boucle sur les classes
 for classe in ('2GT 2',):
