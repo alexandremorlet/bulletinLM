@@ -187,7 +187,13 @@ def make_bulletin():
     p.add_page(orientation='P', format="A4")
     p.set_xy(x_parent, y_parent)
     p.set_font('Arial','B',12)
-    p.cell(0, h_cell*1.25, parent_nom, aff_bord,2)
+    p.multi_cell(0, h_cell*1.25, parent_nom, aff_bord,'L')
+    # Le pointeur a besoin de sauter 1 ou 2 lignes
+    # selon le nombre de noms affichés (présence de \n si 2 noms)
+    if '\n' in parent_nom:
+        p.set_xy(x_parent, y_parent+2.5*h_cell)
+    else:
+        p.set_xy(x_parent, y_parent+1.25*h_cell)
     p.set_font('Arial','',12)
     p.multi_cell(0, h_cell*1.25, parent_adresse, aff_bord, 'L')
 
@@ -524,7 +530,7 @@ for classe in ('2GT 2',):
             p_adr = (parents_coord[parents[0]]['adresse'],parents_coord[parents[1]]['adresse'])
 
             if p_adr[0] == p_adr[1]: # Ils vivent au même endroit
-                parent_nom = parents_coord[parents[0]]['nom']+' & '+parents_coord[parents[1]]['nom']
+                parent_nom = parents_coord[parents[0]]['nom']+'\n'+parents_coord[parents[1]]['nom']
                 parent_adresse = p_adr[0]
 
                 make_bulletin()
