@@ -192,7 +192,7 @@ def make_bulletin():
     p.multi_cell(0, h_cell*1.25, parent_adresse, aff_bord, 'L')
 
     ### Création du fichier
-    fname = nom+'_'+str(numero_bulletin)
+    fname = nom+str(numero_bulletin)
     try:
         p.output('bulletin/%s.pdf'%fname, 'F')
     except FileNotFoundError as e:
@@ -504,12 +504,35 @@ for classe in ('2GT 2',):
         if "Avertissement" in mention:
             mention = ""
 
+
+        ### Coordonnées des resp légaux pour l'adressage du bulletin
+        # Identifiants des parents
         parents = [str(p) for p in resultats[classe][eleve]['parents']] # besoin de str pour les dict keys
 
-        for parent in parents:
-            # Un bulletin par responsable légal
-            numero_bulletin = parents_coord[parent]['num']
-            parent_nom = parents_coord[parent]['nom']
-            parent_adresse = parents_coord[parent]['adresse']
+        # Trois situations:
+        ## Responsable unique = 1 bulletin
+        ## Responsables à 2 adresses différentes = 2 bulletins
+        ## Responsables à la même adresse = 1 bulletin
+        numero_bulletin = ''
 
+        if len(parents) == 1: # 1 seul resp. légal
+            parent_nom = parents_coord[parents[0]]['nom']
+            parent_adresse = parents_coord[parents[0]]['adresse']
             make_bulletin()
+
+        else: # Dans le cas contraire, on compare les deux adresses
+            p_adr = (parents_coord[parents[0]]['adresse'],parents_coord[parents[1]]['adresse'])
+
+            if p_adr[0] == p_adr[1]: # Ils vivent au même endroit
+                parent_nom = parents_coord[parents[0]]['nom']+' & '+parents_coord[parents[1]]['nom']
+                parent_adresse = p_adr[0]
+
+                make_bulletin()
+
+            else: # Ils ne vivent pas au même endroit
+                for i in range(2):
+                    numero_bulletin = i+1
+                    parent_nom = parents_coord[parents[i]]['nom']
+                    parent_adresse = parents_coord[parents[i]]['adresse']
+
+                    make_bulletin()
