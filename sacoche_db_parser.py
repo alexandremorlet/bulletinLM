@@ -300,8 +300,11 @@ for classe in resultats:
     cursor.execute(query)
 
     for periode, appr, eleve, matiere, prof in cursor:
-        # TODO: UTF-8 https://alexanderankin.github.io/pyfpdf/mkdocs_docs/Unicode/index.html
-        resultats[classe][eleve][periode]['appreciations'][matiere] = appr.replace("\u2019","'").replace('\u2026',"...")
+        # WARNING: Unicode / UTF-8 / Erreurs d'encodage
+        # Pour supporter les caractères unicode, il faudrait installer une autre police
+        # Le choix a été fait de remplacer les caractères au cas par cas
+        # Voir: https://pyfpdf.readthedocs.io/en/latest/Unicode/index.html
+        resultats[classe][eleve][periode]['appreciations'][matiere] = appr.replace(u"\u2019","'").replace(u'\u2026',"...")
         resultats[classe][eleve]['profs'][matiere] = prof # HYP: 1 prof par matière !
 
 
@@ -312,7 +315,7 @@ for classe in resultats:
              "AND p.periode_id = os.periode_id ")
     cursor.execute(query)
     for periode, eleve, appr in cursor:
-        resultats[classe][eleve][periode]['bilan'] = appr
+        resultats[classe][eleve][periode]['bilan'] = appr.replace(u"\u2019","'")
 
     ### Mentions du conseil de classe (encouragements, félicitations, avertissement ...)
     # Une seule mention peut être rentrée dans l'interface (donc AT+AC = un élément).
