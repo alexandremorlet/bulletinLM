@@ -167,7 +167,7 @@ def make_bulletin():
     # Mention
     # TODO: Question à poser: "mention:" apparaît toujours même si pas de mention ?
     p.set_font('Arial','B',8)
-    p.set_xy(x_appr_dir,y_appr_dir+4*h_cell)
+    p.set_xy(x_appr_dir,y_appr_dir+5*h_cell)
     p.cell(w_prof/2,h_cell,'Mention :',aff_bord,0)
     p.set_font('Arial','',8)
     p.cell(0,h_cell,mention,aff_bord,0)
@@ -507,7 +507,7 @@ for classe in ('2GT 2',):
         mention = resultats[classe][eleve][periode].get('mention','')
 
         # Attention ! Les avertissements n'apparaissent pas sur le bulletin.
-        if "Avertissement" in mention:
+        if "Avertissement" in mention or "Blâme" in mention:
             mention = ""
 
 
